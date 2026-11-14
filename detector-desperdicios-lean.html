@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detector de desperdicios Lean</title>
+<style>
+
+:root{
+  --navy:#12304f; --navy2:#1d4a75; --ink:#1c2733; --muted:#5d6b7a; --line:#dfe5ec;
+  --bg:#f4f6f9; --card:#ffffff; --teal:#0f7c86; --teal-soft:#e3f3f4;
+  --va:#1f8a5b; --va-soft:#e4f4ec; --nn:#b57b06; --nn-soft:#fcf1dc; --nva:#c0392b; --nva-soft:#fbe6e3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+button,.btn,a{touch-action:manipulation;font-family:inherit}
+header{background:var(--navy);color:#fff;padding:14px 16px}
+.brand{display:flex;align-items:center;gap:10px;max-width:880px;margin:0 auto}
+.brand h1{font-size:1.15rem;margin:0;font-weight:700}
+.brand small{display:block;font-weight:400;opacity:.8;font-size:.8rem}
+main{max-width:880px;margin:0 auto;padding:16px 14px 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{font-size:1.2rem;margin:0 0 6px}
+h3{font-size:1rem;margin:0 0 8px}
+p.lead{color:var(--muted);margin:0 0 12px}
+label,.lbl{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 6px;font-weight:600}
+input[type=text],textarea,select{width:100%;padding:11px 12px;border:1px solid #c9d3de;border-radius:8px;font-size:1rem;background:#fff;color:var(--ink);font-family:inherit}
+textarea{resize:vertical;line-height:1.4}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:140px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 16px;border-radius:8px;border:1px solid var(--navy2);background:var(--navy2);color:#fff;font-size:.95rem;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.sec{background:#fff;color:var(--navy2)}
+.btn.teal{background:var(--teal);border-color:var(--teal)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--navy2)}
+.btn.danger{background:#fff;color:var(--nva);border-color:#e3b3ad}
+.btn.armed{background:var(--nva)!important;color:#fff!important;border-color:var(--nva)!important}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.privacy{font-size:.8rem;color:var(--muted);margin-top:10px}
+details.opts{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.opts summary{cursor:pointer;font-weight:600;color:var(--navy2);font-size:.9rem}
+.msg{font-size:.85rem;color:var(--muted);margin-top:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid #c9d3de;background:#fff;border-radius:999px;padding:8px 13px;font-size:.88rem;cursor:pointer;color:var(--ink);min-height:38px}
+.chip.on{background:var(--navy2);color:#fff;border-color:var(--navy2);font-weight:600}
+/* Pasos */
+.step{border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px;border-left:6px solid #c9d3de;overflow:hidden}
+.step.va{border-left-color:var(--va)}.step.nn{border-left-color:var(--nn)}.step.nva{border-left-color:var(--nva)}
+.sh{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;padding:12px;cursor:pointer;color:var(--ink);font-size:1rem}
+.sh .num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;margin-top:1px}
+.sh .mid{flex:1;min-width:0}
+.sh .sname{font-weight:700;display:block;overflow-wrap:anywhere}
+.sh .smeta{font-size:.82rem;color:var(--muted);display:block;margin-top:2px}
+.sh .sbadge{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.sh .sicons{font-size:1rem;letter-spacing:2px}
+.sh .chev{flex:0 0 auto;color:var(--muted);font-size:.9rem;margin-top:4px;transition:transform .15s}
+.step.open .sh .chev{transform:rotate(180deg)}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.b-va{background:var(--va-soft);color:var(--va)}.b-nn{background:var(--nn-soft);color:var(--nn)}.b-nva{background:var(--nva-soft);color:var(--nva)}.b-pend{background:#eef2f6;color:var(--muted)}
+.sb{padding:0 12px 14px;border-top:1px solid var(--line)}
+.namerow{display:flex;gap:6px;margin-top:12px}
+.namerow input{flex:1;min-width:0}
+.iconbtn{flex:0 0 42px;width:42px;min-width:42px;height:44px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:1rem;color:var(--muted)}
+.iconbtn:disabled{opacity:.35}
+.iconbtn.armed{flex:0 0 auto;padding:0 10px;font-size:.82rem;font-weight:700}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tipo{border:1.5px solid #c9d3de;background:#fff;border-radius:10px;padding:10px 6px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--ink);min-height:56px;line-height:1.2}
+.tipo .ic{display:block;font-size:1.2rem;margin-bottom:3px}
+.tipo.on.va{background:var(--va-soft);border-color:var(--va);color:var(--va)}
+.tipo.on.nn{background:var(--nn-soft);border-color:var(--nn);color:#8a5d00}
+.tipo.on.nva{background:var(--nva-soft);border-color:var(--nva);color:var(--nva)}
+.hint{font-size:.8rem;color:var(--muted);margin-top:6px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:640px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{position:relative;border:1.5px solid #c9d3de;background:#fff;border-radius:10px;padding:10px 8px 9px;cursor:pointer;text-align:left;color:var(--ink);min-height:82px;line-height:1.2}
+.tile .ic{font-size:1.25rem;display:block}
+.tile .tl{display:block;font-size:.86rem;font-weight:600;margin-top:4px}
+.tile .tn{display:block;font-size:.72rem;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+.tile.on{background:var(--nva-soft);border-color:var(--nva)}
+.tile.on .tn{color:var(--nva);font-weight:700}
+.tile.on::after{content:"✓";position:absolute;top:6px;right:9px;color:var(--nva);font-weight:800}
+.lvls{margin-top:10px;display:grid;gap:8px}
+.lvlrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;padding:8px}
+.lvlrow .ln{flex:1 1 150px;font-size:.85rem;font-weight:600}
+.lvlrow .lb{display:flex;gap:4px;flex-wrap:wrap}
+.lvlrow button{border:1px solid #c9d3de;background:#fff;border-radius:6px;padding:6px 9px;font-size:.8rem;cursor:pointer;min-height:34px;color:var(--ink)}
+.lvlrow button.on{background:var(--nva);border-color:var(--nva);color:#fff;font-weight:700}
+details.help{margin-top:8px;font-size:.82rem;color:var(--muted)}
+details.help summary{cursor:pointer;color:var(--navy2);font-weight:600}
+details.help li{margin-bottom:5px}
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.nums{grid-template-columns:1fr}}
+.numin{display:flex;align-items:center;gap:6px;margin-top:6px}
+.numin input{width:96px;flex:0 0 96px;padding:9px 10px}
+.numin span{font-size:.85rem;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:16px;border:2px dashed var(--line);border-radius:10px;margin-bottom:10px}
+/* Barra inferior */
+.bar-live{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;z-index:10;box-shadow:0 -4px 14px rgba(0,0,0,.15)}
+.bar-live .in{max-width:880px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:12px}
+.bar-live .t{flex:1;min-width:0;line-height:1.25}
+.bar-live b{font-size:1.15rem;color:#7fe0e8}
+.bar-live small{display:block;font-size:.78rem;color:#cfe0ef}
+/* Resultados */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:1.5rem;color:var(--navy);line-height:1.15}
+.kpi span{font-size:.8rem;color:var(--muted)}
+.kpi.hl{background:var(--navy);border-color:var(--navy)}
+.kpi.hl b{color:#7fe0e8}.kpi.hl span{color:#cfe0ef}
+.headline{font-size:1.02rem;background:var(--teal-soft);border-radius:10px;padding:12px 14px;margin:10px 0 0}
+.warn{background:var(--nn-soft);color:#7a5200;border-radius:8px;padding:10px 12px;font-size:.88rem;margin-bottom:14px}
+.prio{display:flex;gap:12px;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}
+.prio .n{flex:0 0 36px;height:36px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.prio .body{flex:1;min-width:0}
+.prio .t{font-weight:700;overflow-wrap:anywhere}
+.prio .w{font-size:.85rem;color:var(--muted);margin:2px 0 6px}
+.prio .cm{font-size:.9rem}
+.prio .pn{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:.82rem;color:var(--muted)}
+.prio .pn b{color:var(--ink)}
+.map{display:grid;gap:10px}
+.mstep{border-radius:10px;padding:12px;border-left:6px solid}
+.mstep.va{background:var(--va-soft);border-color:var(--va)}
+.mstep.nn{background:var(--nn-soft);border-color:var(--nn)}
+.mstep.nva{background:var(--nva-soft);border-color:var(--nva)}
+.mstep .t{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:700;overflow-wrap:anywhere}
+.mstep ul{margin:8px 0 0;padding-left:18px;font-size:.88rem}
+.mstep li{margin-bottom:4px}
+.mstep .ok{font-size:.88rem;color:var(--va);margin-top:6px}
+.meta{font-size:.85rem;color:var(--muted)}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:150px 1fr 30px;gap:8px;align-items:center;font-size:.88rem}
+@media(max-width:480px){.bar{grid-template-columns:118px 1fr 24px;font-size:.82rem}}
+.bar .track{background:#eef2f6;border-radius:4px;height:16px;overflow:hidden}
+.bar .fill{background:var(--teal);height:100%;border-radius:4px}
+.bar .v{text-align:right;font-weight:700}
+details.calc{font-size:.88rem;color:var(--muted)}
+details.calc summary{cursor:pointer;font-weight:600;color:var(--navy2)}
+details.calc li{margin-bottom:4px}
+.lt{display:flex;gap:10px;flex-wrap:wrap;font-size:.9rem;margin-top:6px}
+.lt div{flex:1;min-width:140px;background:#f6f8fa;border-radius:8px;padding:10px}
+.lt b{display:block;font-size:1.15rem;color:var(--navy)}
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;-webkit-overflow-scrolling:touch;background:rgba(10,20,30,.6);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;z-index:20}
+.modal.open{display:flex}
+.modal .box{background:#fff;border-radius:12px;padding:14px;max-width:460px;width:100%}
+.modal img{width:100%;border-radius:8px;border:1px solid var(--line);display:block}
+.modal p{font-size:.85rem;color:var(--muted)}
+footer a{color:var(--navy2);font-weight:600}
+.autor{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem;background:var(--teal-soft);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.autor a{color:var(--navy2);font-weight:700}
+footer{text-align:center;font-size:.78rem;color:var(--muted);padding:0 14px 24px}
+.hidden{display:none!important}
+.seg{display:inline-flex;border:1px solid #c9d3de;border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;border-right:1px solid #e3e8ee;background:#fff;padding:8px 12px;font-size:.85rem;cursor:pointer;min-height:40px;color:var(--ink)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--navy2);color:#fff;font-weight:600}
+.numin.wrap{flex-wrap:wrap}
+.lists{display:grid;gap:14px}
+.ejs{margin-top:12px}
+.ejs .lbl{margin-top:0}
+.chip.armed{background:var(--nva);color:#fff;border-color:var(--nva)}
+.opt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.opt-grid{grid-template-columns:1fr 1fr}}
+.opt-grid input{max-width:none}
+.etapas{display:flex;gap:4px;margin:0 0 12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:5px;position:-webkit-sticky;position:sticky;top:0;z-index:5}
+.etapas button{flex:1 1 0;min-width:0;border:0;background:transparent;border-radius:8px;padding:6px 2px;font-size:.78rem;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:52px;line-height:1.15;font-family:inherit;text-align:center}
+.etapas .en{width:24px;height:24px;border-radius:50%;background:#eef2f6;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem}
+.etapas button.ok .en{background:var(--va);color:#fff}
+.etapas button.on{background:var(--teal-soft);color:var(--navy);font-weight:700}
+.etapas button.on .en{background:var(--teal);color:#fff}
+@media(max-width:380px){.etapas button{font-size:.7rem}}
+@media(max-width:360px){.etapas{gap:2px;padding:4px}.etapas button{font-size:.64rem;padding:6px 1px;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}}
+.tpls{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:640px){.tpls{grid-template-columns:1fr 1fr}}
+.tplh{grid-column:1/-1;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:6px}
+.tpl{text-align:left;border:1.5px solid #c9d3de;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);min-height:56px;font-size:.92rem;line-height:1.25;font-family:inherit}
+.tpl b{display:block;overflow-wrap:anywhere}.tpl span{display:block;font-size:.78rem;color:var(--muted);margin-top:3px}
+.tpl.on{border-color:var(--teal);background:var(--teal-soft)}
+.tpl.blank{border-style:dashed}
+.tpl.armed{border-color:var(--nva);background:var(--nva-soft)}
+.tpl.armed span{color:var(--nva)}
+.row2{display:flex;gap:6px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.row2:first-child{border-top:0}
+.row2 .num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;margin-top:8px}
+.r2mid{flex:1;min-width:0}
+.r2mid textarea{resize:none;padding:9px 11px;line-height:1.3}
+.r2btns{display:flex;gap:4px;flex:0 0 auto}
+.ftag{display:inline-block;font-size:.68rem;font-weight:700;color:var(--teal);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+@media(max-width:420px){.row2{flex-wrap:wrap}.r2mid{flex:1 1 calc(100% - 34px)}.r2btns{margin-left:34px}}
+.chk{border:1px solid var(--line);border-left:5px solid #c9d3de;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}
+.chk.done{border-left-color:var(--va)}.chk.auto{border-left-color:var(--teal)}.chk.na{opacity:.75}
+.chk .cq{font-weight:700}
+.chk .cs{font-size:.84rem;margin-top:6px;color:var(--va);font-weight:600}
+.chk .cs.auto{color:var(--teal)}.chk .cs.na{color:var(--muted)}
+.chk .actions{margin-top:8px;gap:6px}
+.chk .btn{min-height:40px;padding:8px 12px;font-size:.86rem;white-space:normal;text-align:left;justify-content:flex-start}
+.chk .btn.sec[aria-pressed=true]{background:var(--navy2);color:#fff}
+.chkh{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:14px 0 8px}
+.prog{height:8px;background:#eef2f6;border-radius:4px;overflow:hidden;margin:6px 0 4px}
+.prog i{display:block;height:100%;background:var(--teal)}
+.b-def{background:#eef2f6;color:var(--muted)}
+.warn .btn{min-height:34px;padding:4px 10px;margin-left:4px;color:#7a5200;text-decoration:underline}
+.segbar{display:flex;gap:2px;height:22px;margin:10px 0 8px}
+.segbar span{min-width:3px;height:100%}
+.segbar span:first-child,.tlb span:first-child{border-radius:4px 0 0 4px}
+.segbar span:last-child,.tlb span:last-child{border-radius:0 4px 4px 0}
+.segbar span:only-child,.tlb span:only-child{border-radius:4px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.84rem;color:var(--ink);margin-top:4px}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:10px;height:10px;border-radius:2px;flex:0 0 10px}
+.chart-sum{font-size:.95rem;margin:2px 0 6px}
+.hbars{display:grid;gap:9px;margin-top:10px}
+.hb{display:grid;grid-template-columns:minmax(0,38%) 1fr auto;gap:4px 8px;align-items:center;font-size:.86rem}
+.hb .hl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb .ht{height:14px;display:block}
+.hb .ht i{display:block;height:100%;min-width:3px;background:#8cc5ca;border-radius:0 4px 4px 0}
+.hb.k .ht i{background:var(--teal)}
+.hb .hv{font-weight:700;text-align:right;white-space:nowrap}
+.hb .hv small{display:block;font-weight:400;color:var(--muted);font-size:.74rem}
+@media(max-width:480px){.hb{grid-template-columns:minmax(0,1fr) auto}.hb .ht{grid-column:1/-1;grid-row:2}.hb .hl{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}
+[data-tip]:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.tl{display:grid;grid-template-columns:64px minmax(0,1fr) 5.5em;gap:8px;align-items:center;font-size:.86rem;margin-top:10px}
+.tlb{display:flex;gap:2px;height:20px}
+.tlb span{min-width:3px}
+.tlv{font-weight:700;white-space:nowrap;text-align:right}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:6px 0 8px}
+.fg{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.fs small{font-size:.7rem;margin-left:2px}
+.fs{min-width:30px;padding:0 5px;height:30px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff}
+.fs.va{background:var(--va)}.fs.nn{background:var(--nn);color:var(--ink)}.fs.nva{background:var(--nva)}
+.fa{color:var(--muted);font-size:.95rem}.fw{font-size:.9rem}
+.tip{position:fixed;z-index:40;display:none;background:var(--navy);color:#fff;font-size:.8rem;line-height:1.3;padding:6px 9px;border-radius:6px;pointer-events:none;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.tag-plazo{display:inline-block;background:var(--teal-soft);color:var(--teal);font-weight:700;border-radius:6px;padding:2px 8px;font-size:.8rem}
+
+.tile .tl,.tile .tn,.tipo{overflow-wrap:anywhere}
+@media(max-width:420px){.namerow{flex-wrap:wrap}.namerow input{flex:1 1 100%}}
+@media(max-width:360px){main{padding-left:8px;padding-right:8px}.card{padding:12px}.sb{padding:0 8px 12px}.tile{padding:9px 6px}}
+@media(max-width:380px){.tipo{font-size:.78rem;padding:10px 3px}.tile .tn{font-size:.7rem;letter-spacing:0;text-transform:none}.tile .tl{font-size:.82rem}}
+@media(max-width:340px){.tile .tn{font-size:.63rem}.tile{padding:9px 5px}.tiles{gap:6px}}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="14" cy="14" r="9" fill="none" stroke="#5fd0d9" stroke-width="3"/><line x1="21" y1="21" x2="30" y2="30" stroke="#5fd0d9" stroke-width="3.5" stroke-linecap="round"/><path d="M10 14h8M14 10v8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+    <div><h1>Detector de desperdicios Lean</h1><small>Levanta cualquier proceso paso a paso (industria, oficina, sanidad o residencias), encuentra los 8 desperdicios y decide por dónde empezar</small></div>
+  </div>
+</header>
+
+<main>
+  <section id="v-proceso">
+    <nav class="etapas" id="etapas" aria-label="Etapas del análisis"></nav>
+
+    <div id="e1">
+    <div class="card">
+      <h2>1. Define el proceso</h2>
+      <p class="lead">Elige tu sector y el proceso que quieres analizar: la app te propone los pasos habituales para que no se olvide ninguno. Después los ajustas a cómo trabajáis vosotros.</p>
+      <label for="f-proceso">Nombre del proceso</label>
+      <input type="text" id="f-proceso" maxlength="80" placeholder="Por ejemplo: cambio de molde en la inyectora 3">
+      <div class="lbl">Sector</div>
+      <div class="chips" id="sectores"></div>
+      <div class="lbl">Proceso tipo</div>
+      <div class="tpls" id="plantillas"></div>
+      <div class="hint">Al elegir un proceso tipo se cargan sus pasos habituales. Podrás quitar, cambiar y añadir pasos.</div>
+      <div class="row">
+        <div><label for="f-inicio">¿Qué lo pone en marcha?</label><input type="text" id="f-inicio" maxlength="120" placeholder="Por ejemplo: llega la orden de fabricación"></div>
+        <div><label for="f-fin">¿Cómo termina y quién recibe el resultado?</label><input type="text" id="f-fin" maxlength="120" placeholder="Por ejemplo: piezas verificadas en el almacén"></div>
+      </div>
+      <div class="hint">Marcar el principio y el final evita que se queden fuera los primeros o los últimos pasos.</div>
+      <div class="lbl">Departamento</div>
+      <div class="chips" id="areas"></div>
+      <div class="hint">Adapta las mejoras que propone la app.</div>
+      <div class="actions"><button class="btn" data-etapa="2">Siguiente: revisar los pasos →</button></div>
+      <div class="ejs">
+        <div class="lbl">¿Quieres verlo funcionar? Carga un ejemplo</div>
+        <div class="chips" id="ejemplos"></div>
+      </div>
+      <details class="opts">
+        <summary>Opciones y tus datos</summary>
+        <div class="opt-grid">
+          <div><label for="f-semanas">Semanas laborables al año</label><input type="text" id="f-semanas" inputmode="numeric" maxlength="2" autocomplete="off"></div>
+          <div><label for="f-dias">Días laborables por semana</label><input type="text" id="f-dias" inputmode="numeric" maxlength="1" autocomplete="off"></div>
+          <div><label for="f-coste">Coste por hora (€, opcional)</label><input type="text" id="f-coste" inputmode="decimal" maxlength="7" autocomplete="off" placeholder="Ej.: 28"></div>
+        </div>
+        <div class="hint">El coste por hora permite ver el ahorro en euros. Los días por semana se usan cuando una tarea se hace "al día" (pon 7 si la planta trabaja todos los días).</div>
+        <div class="actions">
+          <button class="btn sec" id="b-export">Exportar (.json)</button>
+          <button class="btn sec" id="b-import">Importar (.json)</button>
+          <button class="btn danger" id="b-borrar">Borrar todo</button>
+          <input type="file" id="f-import" accept=".json,application/json" class="hidden">
+        </div>
+        <div id="import-msg" class="msg"></div>
+      </details>
+      <div class="privacy" id="privacy">🔒 Tus datos no salen de este dispositivo: se guardan solo en este navegador.</div>
+    </div>
+    </div>
+
+    <div id="e2" class="hidden">
+    <div class="card">
+      <h2>2. Revisa los pasos</h2>
+      <p class="lead">Quita lo que no hacéis, cambia los nombres a vuestra forma de llamarlos y ordénalos. Piensa en cómo se trabaja de verdad, no en cómo debería ser.</p>
+      <div id="lista2"></div>
+      <label for="f-nuevos" id="lbl-nuevos">Añade los pasos, uno por línea</label>
+      <textarea id="f-nuevos" rows="4" placeholder="Pedir el material&#10;Esperar la aprobación&#10;Preparar la máquina"></textarea>
+      <div class="actions"><button class="btn sec" id="b-add">Añadir pasos</button></div>
+      <div id="add-msg" class="msg"></div>
+      <div class="actions"><button class="btn ghost" data-etapa="1">← Definir</button><button class="btn" data-etapa="3">Siguiente: ¿falta algún paso? →</button></div>
+    </div>
+    </div>
+
+    <div id="e3" class="hidden">
+    <div class="card">
+      <h2>3. ¿Falta algún paso?</h2>
+      <p class="lead">Estas preguntas detectan los pasos que más se olvidan al describir un proceso. Responde cada una: si el paso existe y no está en la lista, añádelo con un toque.</p>
+      <div id="chk-prog"></div>
+      <div id="checks"></div>
+      <div id="chk-msg" class="msg"></div>
+      <div class="actions"><button class="btn ghost" data-etapa="2">← Pasos</button><button class="btn" data-etapa="4">Siguiente: diagnóstico →</button></div>
+    </div>
+    </div>
+
+    <div id="e4" class="hidden">
+    <div class="card">
+      <h2>4. Diagnostica cada paso</h2>
+      <p class="lead">Toca cada paso y responde: si aporta valor, qué desperdicios ves, cada cuánto se hace y cuánto tarda.</p>
+      <div id="lista"></div>
+      <div class="actions"><button class="btn ghost" data-etapa="3">← ¿Falta algún paso?</button><button class="btn teal" data-go="result">Ver resultados →</button></div>
+    </div>
+    </div>
+  </section>
+
+  <section id="v-result" class="hidden">
+    <div id="result-box"></div>
+  </section>
+</main>
+
+<div class="bar-live hidden" id="barra">
+  <div class="in">
+    <div class="t"><b id="bar-h">0 h/año</b> recuperables<small id="bar-s"></small></div>
+    <button class="btn teal" id="b-ver">Ver resultados →</button>
+  </div>
+</div>
+
+<footer>Detector de desperdicios Lean · Creado por <a href="https://www.linkedin.com/in/sergio-gaete-aguilera-72cl" target="_blank" rel="noopener">Sergio Gaete Aguilera</a> · <a href="https://www.linkedin.com/in/sergio-gaete-aguilera-72cl" target="_blank" rel="noopener">Conecta conmigo en LinkedIn</a><br>Funciona sin conexión y sin enviar datos a ningún servidor</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Tarjeta resumen">
+  <div class="box">
+    <h3>Tarjeta resumen</h3>
+    <img id="card-img" alt="Tarjeta resumen del análisis">
+    <p>Si la descarga no empieza en tu móvil, mantén pulsada la imagen y elige "Guardar imagen".</p>
+    <div class="actions">
+      <a class="btn teal" id="card-dl" download="desperdicios-lean.png">Descargar PNG</a>
+      <button class="btn sec" id="card-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+<canvas id="cv" width="1080" height="1350" class="hidden"></canvas>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= Definiciones ================= */
+/* peso: parte del desperdicio que se traduce en horas de trabajo (inventario y sobreproducción afectan sobre todo a stock y plazo) */
+var W = [
+ {k:"T",ic:"🚚",tl:"Se mueve de un sitio a otro",n:"Transporte",peso:1,
+  ej:"Llevar material entre zonas, reenviar correos, pasar datos de un sistema a otro.",
+  esc:["1 traspaso","2 o 3","Más de 3"],
+  exp:"Mover cosas no añade valor: solo añade tiempo y riesgo de pérdida o daño.",
+  cm:"Un solo canal y una sola entrada de datos, y acercar lo que se mueve para reducir traspasos."},
+ {k:"I",ic:"📦",tl:"Se acumula esperando turno",n:"Inventario",peso:0.25,
+  ej:"Material en curso entre puestos, bandejas de pendientes, stock de más.",
+  esc:["Horas","Días","Semanas"],
+  exp:"Lo acumulado inmoviliza dinero, ocupa espacio y esconde los problemas del proceso.",
+  cm:"Trabajar en flujo continuo o en lotes pequeños, con un límite de trabajo pendiente (kanban)."},
+ {k:"M",ic:"🔍",tl:"Hay que buscar o desplazarse",n:"Movimiento",peso:1,
+  ej:"Buscar herramientas o documentos, recorridos largos, saltar entre pantallas.",
+  esc:["Pocas veces","Varias veces","Constantemente"],
+  exp:"Cada búsqueda o desplazamiento es tiempo de trabajo que no aporta nada.",
+  cm:"5S del puesto (físico o digital): todo lo necesario a mano, con ubicaciones y nombres estándar."},
+ {k:"E",ic:"⏳",tl:"Se queda esperando",n:"Esperas",peso:1,
+  ej:"Personas o trabajo parados: una aprobación, un material, una máquina, un camión.",
+  esc:["Minutos","Horas","Días"],
+  exp:"Mientras se espera, el proceso no avanza y el plazo para el cliente crece.",
+  cm:"Acordar plazos máximos de respuesta, preparar lo necesario por adelantado y equilibrar la carga."},
+ {k:"O",ic:"➕",tl:"Se hace de más o antes de tiempo",n:"Sobreproducción",peso:0.5,
+  ej:"Fabricar o preparar antes de que haga falta, lotes grandes, informes que nadie lee.",
+  esc:["A veces","A menudo","Siempre"],
+  exp:"Hacer de más es el desperdicio que genera todos los demás.",
+  cm:"Hacer solo lo que pide la demanda real (sistema pull) y eliminar lo que nadie usa."},
+ {k:"P",ic:"🔁",tl:"Se revisa o se teclea dos veces",n:"Sobreprocesamiento",peso:1,
+  ej:"Dobles controles, el mismo dato tecleado dos veces, acabados que el cliente no pide.",
+  esc:["1 vez de más","2 veces","3 o más"],
+  exp:"Es calidad o trabajo que el cliente no pide ni paga.",
+  cm:"Definir el estándar mínimo que necesita el cliente y quitar revisiones y pasos duplicados."},
+ {k:"D",ic:"❌",tl:"Hay errores o hay que rehacer",n:"Defectos",peso:1,
+  ej:"Piezas rechazadas, retrabajos, pedidos con datos erróneos, entregas equivocadas.",
+  esc:["A veces","A menudo","Casi siempre"],
+  exp:"Cada error se paga dos veces: al hacerlo y al arreglarlo.",
+  cm:"Plantillas, checklists y validaciones (poka-yoke) para que el error no pueda ocurrir."},
+ {k:"S",ic:"🧠",tl:"Desaprovecha a la persona",n:"Talento no aprovechado",peso:1,
+  ej:"Un técnico haciendo tareas repetitivas, un experto sin voz en las mejoras.",
+  esc:["Poco","Bastante","Mucho"],
+  exp:"La persona que hace el trabajo es quien mejor sabe cómo mejorarlo.",
+  cm:"Automatizar la tarea repetitiva y hacer una sesión kaizen con quien la realiza."}
+];
+var WK=W.map(function(x){return x.k;}), WBY={}; W.forEach(function(x){WBY[x.k]=x;});
+
+/* Contramedidas específicas por área (si un área no tiene, se usa la general) */
+var CM={
+ "Compras":{
+  T:"Un único canal de solicitudes (formulario o portal) conectado al ERP, sin reenvíos de correo.",
+  I:"Revisar las solicitudes a diario en flujo continuo y fijar un máximo de pendientes por comprador.",
+  M:"Carpeta única por proveedor con contratos, tarifas y certificados, con nombres estándar (5S digital).",
+  E:"Plazos máximos de respuesta acordados con proveedores y aprobadores, y aprobación automática por debajo de un importe.",
+  O:"Comprar según consumo real (punto de pedido o kanban con el proveedor), no por si acaso.",
+  P:"Pedir varias ofertas solo por encima de un importe y usar acuerdos marco para lo repetitivo.",
+  D:"Formulario de solicitud con campos obligatorios y catálogo de artículos para evitar datos erróneos.",
+  S:"Automatizar el seguimiento de pedidos y dedicar al comprador a negociar y desarrollar proveedores."},
+ "Producción":{
+  T:"Acercar procesos y materiales (layout en flujo o célula) y abastecer la línea con una ruta fija (milk run).",
+  I:"Reducir el tamaño de lote y limitar el material en curso entre puestos con kanban o FIFO.",
+  M:"5S en el puesto y carro de cambio con todo preparado antes de parar la máquina (SMED).",
+  E:"Abastecer la línea por adelantado, equilibrar la carga entre puestos y aplicar TPM para evitar paradas.",
+  O:"Fabricar contra demanda real (pull) y bajar el tamaño de lote acortando los cambios con SMED.",
+  P:"Eliminar ajustes y comprobaciones innecesarias con reglajes fijos, plantillas y parámetros estándar (SMED en los cambios).",
+  D:"Poka-yoke, parámetros estándar y autocontrol en el puesto para detectar el fallo en el origen.",
+  S:"Formar en polivalencia y que los operarios lideren mejoras (kaizen y sugerencias)."},
+ "Logística":{
+  T:"Ubicar por rotación (slotting): lo que más se mueve, cerca de los muelles y de la zona de preparación.",
+  I:"Ajustar el stock con punto de pedido o kanban y revisar las ubicaciones con material parado.",
+  M:"Puestos de preparación y embalaje con todo a mano, rutas de picking optimizadas y ubicaciones señalizadas.",
+  E:"Citas de carga y descarga con horario fijo y preparación terminada antes de que llegue el camión.",
+  O:"Preparar al ritmo de expedición y no adelantar pedidos que todavía no salen.",
+  P:"Escaneo en el momento de preparar y verificación por muestreo en lugar de revisar el 100 %.",
+  D:"Lectura obligatoria de códigos de barras y etiquetas generadas por el sistema, no a mano.",
+  S:"Que el equipo de almacén proponga mejoras de layout y rutas, y automatizar la documentación."},
+ "Planificación":{
+  T:"Pedidos, stock y capacidad en una sola herramienta, sin exportar y pegar en hojas de cálculo.",
+  I:"Liberar órdenes al ritmo de la capacidad real y limitar los pedidos en curso.",
+  M:"Un único tablero de planificación visible para todos, con una sola versión del plan.",
+  E:"Fechas de proveedores confirmadas por portal o EDI, con plazo máximo de respuesta.",
+  O:"Planificar según demanda firme y no adelantar producción solo para llenar capacidad.",
+  P:"Congelar el plan a corto plazo (horizonte fijo) y nivelar la carga (heijunka) para no replanificar a diario.",
+  D:"Reglas claras para aceptar urgencias y datos maestros revisados (plazos, capacidades y stocks).",
+  S:"Automatizar los cálculos repetitivos y dedicar al planificador a anticipar riesgos."},
+ "Mantenimiento":{
+  T:"Repuestos críticos cerca de las máquinas y kits preparados para cada intervención.",
+  I:"Stock de repuestos según criticidad y consumo, eliminando lo obsoleto.",
+  M:"Repuestos, herramientas y documentación técnica ordenados e identificados junto a cada línea (5S).",
+  E:"Planificar el preventivo y tener repuestos, permisos y herramientas listos antes de parar.",
+  O:"Ajustar la frecuencia del preventivo al estado real del equipo (mantenimiento según condición).",
+  P:"Simplificar órdenes de trabajo y partes: registrar solo los datos que se usan.",
+  D:"Análisis de causa raíz de las averías repetidas y estándares de intervención con checklist.",
+  S:"Mantenimiento autónomo (TPM): los operarios hacen limpieza, inspección y ajustes básicos."},
+ "Asistencial":{
+  T:"Acercar el material y la medicación a donde se usan y que la información (pautas, avisos, resultados) llegue por un solo canal digital, sin transcribir ni reenviar.",
+  I:"Reponer el stock de planta por niveles (doble cajón o kanban) y revisar las caducidades.",
+  M:"Carros y puestos de enfermería ordenados (5S), con el material de cada procedimiento preparado en kits.",
+  E:"Acordar plazos de respuesta con farmacia, médicos y otros servicios, coordinar agendas y avisar en cuanto algo esté listo, para que nadie quede esperando.",
+  O:"Pedir solo las pruebas, registros y preparaciones que se van a usar, y preparar al ritmo de la necesidad real.",
+  P:"Eliminar los registros duplicados (papel y sistema) y las comprobaciones que no aportan seguridad, manteniendo las verificaciones críticas.",
+  D:"Verificaciones estandarizadas en los puntos de riesgo (identificación, medicación, listas de verificación) y análisis de cada incidente.",
+  S:"Que auxiliares y enfermería propongan mejoras de su trabajo diario, y liberarles de tareas administrativas automatizables."},
+ "Administración":{
+  T:"Una sola entrada de datos: factura electrónica o captura automática al ERP, sin reenvíos de correo ni papel.",
+  I:"Procesar a diario en flujo y no por lotes a fin de mes, con un máximo de documentos pendientes por persona.",
+  M:"Expediente digital único por cliente, proveedor o trabajador, con nombres de archivo estándar (5S digital).",
+  E:"Plazos máximos de aprobación, aprobación automática por debajo de un importe y recordatorios automáticos.",
+  O:"Eliminar los informes y copias que nadie usa y preparar solo lo que el siguiente paso necesita.",
+  P:"Revisar solo por excepción (descuadres o importes altos) en lugar de revisar el 100 % de los documentos.",
+  D:"Validaciones en el ERP (campos obligatorios, cotejo automático con pedido y albarán) y plantillas estándar.",
+  S:"Automatizar la captura y el cotejo de datos y dedicar a las personas al análisis y a resolver excepciones."},
+ "Calidad":{
+  T:"Inspeccionar en el propio puesto en lugar de llevar muestras a otra zona.",
+  I:"Liberar en flujo, sin acumular muestras ni lotes pendientes de análisis.",
+  M:"Instrumentos y fichas de control en el puesto, ordenados y calibrados (5S).",
+  E:"Autocontrol del operario con criterios claros, para no esperar la liberación de calidad.",
+  O:"Ajustar la frecuencia y el tamaño del muestreo al riesgo real del proceso.",
+  P:"Eliminar inspecciones duplicadas y registros que nadie consulta.",
+  D:"Poka-yoke y control estadístico del proceso para prevenir defectos en lugar de detectarlos.",
+  S:"Equipos de mejora con operarios para resolver problemas con 8D o A3."}
+};
+var TIPOS=[{k:"va",ic:"✅",n:"Aporta valor"},{k:"nn",ic:"⚖️",n:"Obligatorio"},{k:"nva",ic:"🚫",n:"No aporta"}];
+var CLASE={va:{n:"Aporta valor",b:"b-va"},nn:{n:"Necesario sin valor",b:"b-nn"},nva:{n:"No aporta valor",b:"b-nva"}};
+var TOPE={va:0.2,nn:0.6,nva:0.9};
+var RIESGO=["Bajo","Medio","Alto"];
+var FUS=[{k:"d",n:"al día"},{k:"s",n:"a la semana"},{k:"m",n:"al mes"}];
+var EUS=[{k:"h",n:"horas"},{k:"d",n:"días"}];
+var MINS=[5,15,30,60], PERS=[1,2,3,4];
+var AREAS=["Compras","Producción","Logística","Planificación","Mantenimiento","Calidad","Asistencial","Administración","Otro"];
+var AREA_OLD={"Planta":"Producción","Almacén":"Logística"};
+var KEY="detector_desperdicios_lean_v4", KEYS_OLD=["detector_desperdicios_lean_v3","detector_desperdicios_lean_v2","detector_desperdicios_lean_v1"];
+var MAXP=40;
+/* ================= Sectores y procesos tipo ================= */
+var SECTORES=[
+ {k:"prod",ic:"🏭",n:"Producción (cualquier fábrica)"},
+ {k:"metal",ic:"⚙️",n:"Metal y mecanizado"},
+ {k:"alim",ic:"🥫",n:"Alimentación y bebidas"},
+ {k:"plast",ic:"🧴",n:"Plástico e inyección"},
+ {k:"log",ic:"📦",n:"Logística y almacén"},
+ {k:"sani",ic:"💊",n:"Farmacéutico y productos sanitarios"},
+ {k:"quim",ic:"⚗️",n:"Químico"},
+ {k:"auto",ic:"🚗",n:"Automoción y montaje"},
+ {k:"salud",ic:"🏥",n:"Sanitario asistencial (hospitales y clínicas)"},
+ {k:"resid",ic:"🧓",n:"Residencias de mayores"},
+ {k:"admin",ic:"🗂️",n:"Administración y oficina"},
+ {k:"gen",ic:"🧩",n:"Otro sector"}
+];
+var SECBY={}; SECTORES.forEach(function(s){SECBY[s.k]=s;});
+var FASES={ini:"Inicio",prep:"Preparación",ejec:"Ejecución",ctrl:"Control",fin:"Cierre"};
+var FRANK={ini:0,prep:1,ejec:2,ctrl:3,fin:4};
+/* Cada proceso tipo: id, nombre, departamento, qué lo inicia, cómo termina y pasos [nombre, fase] */
+var TPL={
+ prod:[
+  {id:"pr1",n:"Lanzamiento de una orden de fabricación",area:"Producción",ini:"Necesidad de fabricar (pedido o plan)",fin:"Orden liberada en planta con materiales y documentación",p:[
+   ["Recibir la necesidad de fabricar (pedido o plan)","ini"],["Crear la orden en el ERP","ejec"],["Comprobar la disponibilidad de materiales y capacidad","ctrl"],
+   ["Pedir o reservar los materiales que faltan","ejec"],["Esperar los materiales que faltan","ejec"],["Preparar la documentación (hoja de ruta, planos e instrucciones)","prep"],
+   ["Secuenciar la orden en el plan de la máquina","ejec"],["Liberar la orden a planta","fin"]]},
+  {id:"pr2",n:"Abastecimiento de línea",area:"Producción",ini:"Necesidad de material en el puesto",fin:"Material en el punto de uso y movimiento registrado",p:[
+   ["Detectar la necesidad (tarjeta kanban, aviso o hueco)","ini"],["Recoger la petición","ejec"],["Preparar el material en el almacén","prep"],
+   ["Trasladar el material a la línea","ejec"],["Ubicar el material en el punto de uso","fin"],["Retirar los envases vacíos","ejec"],["Registrar el movimiento en el sistema","fin"]]},
+  {id:"pr3",n:"Cambio de formato o de referencia (SMED)",area:"Producción",ini:"Última pieza buena de la referencia anterior",fin:"Primera pieza buena de la nueva referencia",p:[
+   ["Preparar materiales, utillajes y documentación antes de parar","prep"],["Parar tras la última pieza buena","ejec"],["Retirar el material y el producto de la referencia anterior","ejec"],
+   ["Limpiar la línea","ejec"],["Cambiar utillajes, moldes o formatos","ejec"],["Ajustar los parámetros","ejec"],["Hacer las primeras piezas y validarlas","ctrl"],
+   ["Ajustar hasta obtener pieza buena","ctrl"],["Guardar los utillajes de la referencia anterior","fin"]]},
+  {id:"pr4",n:"Control de calidad en proceso",area:"Producción",ini:"Pieza o lote a controlar según la pauta",fin:"Resultado registrado y producto liberado o retenido",p:[
+   ["Tomar la muestra según la frecuencia de la pauta","ini"],["Llevar la muestra al punto de control","ejec"],["Medir o inspeccionar","ctrl"],["Comparar con la especificación","ctrl"],
+   ["Registrar el resultado (hoja de control o gráfico SPC)","fin"],["Si no cumple: parar, avisar y segregar el producto","ctrl"],["Ajustar el proceso","ctrl"],["Liberar o retener el lote","fin"]]},
+  {id:"pr5",n:"Gestión de una parada de máquina",area:"Producción",ini:"La máquina se para",fin:"Máquina produciendo y parada registrada con su causa",p:[
+   ["Detectar la parada","ini"],["Intentar resolverla en el puesto","ejec"],["Avisar a mantenimiento o al responsable","ejec"],["Esperar al técnico","ejec"],
+   ["Diagnosticar y reparar","ejec"],["Validar la primera pieza tras el arranque","ctrl"],["Registrar la parada (causa y duración)","fin"],["Analizar las paradas que se repiten","ctrl"]]},
+  {id:"pr6",n:"Mantenimiento autónomo del puesto (TPM)",area:"Producción",ini:"Inicio de turno o frecuencia del estándar",fin:"Puesto limpio, inspeccionado y anomalías comunicadas",p:[
+   ["Revisar el estándar de limpieza, inspección y lubricación","ini"],["Preparar el material de limpieza y lubricación","prep"],["Limpiar el equipo","ejec"],
+   ["Inspeccionar fugas, holguras, ruidos y temperaturas","ctrl"],["Lubricar los puntos indicados","ejec"],["Etiquetar las anomalías encontradas","ctrl"],
+   ["Registrar la tarea en el checklist","fin"],["Comunicar a mantenimiento lo que no se puede resolver en el puesto","fin"]]},
+  {id:"pr7",n:"Embalaje, paletizado y entrega a almacén",area:"Producción",ini:"Producto terminado al final de la línea",fin:"Palés identificados en el almacén y producción declarada",p:[
+   ["Recoger el producto terminado","ini"],["Embalar según la norma del cliente","ejec"],["Etiquetar las cajas y el palé","ejec"],["Paletizar y filmar","ejec"],
+   ["Verificar cantidad, etiquetas y estado del palé","ctrl"],["Trasladar al almacén de producto terminado","ejec"],["Declarar la producción en el sistema","fin"],["Ubicar el palé","fin"]]},
+  {id:"pr8",n:"Reunión diaria de producción y gestión visual",area:"Producción",ini:"Inicio de turno",fin:"Acciones del día asignadas con responsable y fecha",p:[
+   ["Actualizar los indicadores del día anterior (seguridad, calidad y producción)","prep"],["Reunir al equipo en el panel","ini"],["Revisar los resultados frente al objetivo","ctrl"],
+   ["Revisar las incidencias y las acciones abiertas","ctrl"],["Asignar acciones con responsable y fecha","ejec"],["Escalar lo que el equipo no puede resolver","ejec"],
+   ["Actualizar las acciones en el panel","fin"]]},
+  {id:"pr9",n:"Gestión de producto no conforme en planta",area:"Producción",ini:"Se detecta una pieza o un lote no conforme",fin:"Producto con destino decidido y causa analizada",p:[
+   ["Detectar el defecto","ini"],["Identificar y segregar el producto no conforme","ctrl"],["Revisar el producto ya fabricado y el que está en curso","ejec"],
+   ["Registrar la no conformidad","ejec"],["Decidir el destino (retrabajo, selección, chatarra o concesión)","ctrl"],["Retrabajar o seleccionar","ejec"],
+   ["Volver a inspeccionar el producto retrabajado","ctrl"],["Analizar la causa y definir acciones","ctrl"],["Cerrar el registro","fin"]]}
+ ],
+ metal:[
+  {id:"m1",n:"Fabricación de una orden en mecanizado CNC",area:"Producción",ini:"Orden de fabricación lanzada",fin:"Piezas verificadas entregadas al almacén o al siguiente proceso",p:[
+   ["Recibir la orden de fabricación y el plano","ini"],["Preparar el material en bruto y cortarlo a medida","prep"],["Cargar o ajustar el programa CNC","prep"],
+   ["Montar herramientas, utillaje y amarres","prep"],["Reglar ceros y ejecutar el ciclo en vacío","prep"],["Mecanizar la primera pieza y verificarla contra plano","ctrl"],
+   ["Corregir parámetros o compensaciones de herramienta","ctrl"],["Mecanizar la serie","ejec"],["Controlar piezas durante la serie según la hoja de control","ctrl"],
+   ["Desbarbar y limpiar las piezas","ejec"],["Embalar, identificar y trasladar las piezas","fin"],["Declarar la producción y cerrar la orden","fin"]]},
+  {id:"m2",n:"Cambio de serie en máquina (SMED)",area:"Producción",ini:"Última pieza buena de la serie anterior",fin:"Primera pieza buena de la nueva serie",p:[
+   ["Preparar herramientas, utillajes y programa de la siguiente serie","prep"],["Parar la máquina tras la última pieza buena","ejec"],["Retirar material, viruta y piezas de la serie anterior","ejec"],
+   ["Desmontar herramientas y utillajes","ejec"],["Montar y fijar los utillajes nuevos","ejec"],["Montar y medir las herramientas","ejec"],["Cargar el programa y ajustar ceros","ejec"],
+   ["Hacer la primera pieza y medirla","ctrl"],["Ajustar hasta obtener pieza buena","ctrl"],["Guardar herramientas y utillajes de la serie anterior","fin"]]},
+  {id:"m3",n:"Soldadura y acabado de un conjunto",area:"Producción",ini:"Piezas cortadas y conformadas disponibles",fin:"Conjunto acabado e inspeccionado listo para montaje o expedición",p:[
+   ["Recoger las piezas y comprobar que están completas","ini"],["Preparar bordes y limpiar superficies","prep"],["Posicionar en el útil y puntear","prep"],["Soldar el conjunto","ejec"],["Esmerilar y limpiar escoria y proyecciones","ejec"],
+   ["Inspeccionar visualmente y medir el conjunto soldado","ctrl"],["Reparar defectos de soldadura","ctrl"],
+   ["Trasladar a pintura o tratamiento superficial","ejec"],["Pintar o aplicar el tratamiento","ejec"],["Controlar espesor y aspecto del acabado","ctrl"],["Identificar y trasladar a montaje o expedición","fin"]]}
+ ],
+ alim:[
+  {id:"a1",n:"Elaboración y envasado de un lote",area:"Producción",ini:"Orden de producción del lote",fin:"Lote liberado y almacenado en cámara o almacén",p:[
+   ["Recibir la orden y la ficha técnica del producto","ini"],["Verificar la limpieza de la línea y que no quedan restos del producto anterior","prep"],["Preparar y pesar los ingredientes según la receta","prep"],
+   ["Comprobar lotes y alérgenos de los ingredientes","ctrl"],["Elaborar el producto (mezcla, cocción u otras operaciones)","ejec"],["Registrar los puntos de control crítico (temperatura, tiempo)","ctrl"],
+   ["Enfriar o acondicionar el producto","ejec"],["Envasar y cerrar","ejec"],["Etiquetar con lote y fecha de consumo","ejec"],["Controlar peso, cierre, etiqueta y detector de metales","ctrl"],
+   ["Paletizar y trasladar a cámara o almacén","fin"],["Registrar la trazabilidad y liberar el lote","fin"]]},
+  {id:"a2",n:"Recepción de materias primas",area:"Logística",ini:"Llegada del camión del proveedor",fin:"Materia prima aceptada, registrada y almacenada",p:[
+   ["Comprobar que la entrega estaba prevista en un pedido","ini"],["Revisar el estado y la temperatura del vehículo","ctrl"],["Descargar la mercancía","ejec"],
+   ["Comprobar cantidades y lotes contra albarán y pedido","ctrl"],["Inspeccionar envases, etiquetas, caducidad y temperatura del producto","ctrl"],
+   ["Apartar lo no conforme y avisar al proveedor","ctrl"],["Registrar la entrada y los lotes en el sistema","fin"],["Almacenar respetando FIFO o FEFO y la separación de alérgenos","fin"]]},
+  {id:"a3",n:"Limpieza y cambio de producto en línea (alérgenos)",area:"Calidad",ini:"Fin del último lote del producto anterior",fin:"Línea limpia, verificada y liberada para el nuevo producto",p:[
+   ["Parar la línea y retirar producto, envases y etiquetas del lote anterior","ini"],["Desmontar las piezas que requieren limpieza","prep"],["Retirar la suciedad gruesa","ejec"],
+   ["Lavar con detergente según el plan de limpieza","ejec"],["Aclarar","ejec"],["Desinfectar respetando el tiempo de contacto","ejec"],["Aclarar y secar","ejec"],["Montar las piezas","ejec"],
+   ["Inspeccionar y verificar la limpieza (test de alérgenos o ATP)","ctrl"],["Registrar la limpieza y liberar la línea","fin"]]}
+ ],
+ plast:[
+  {id:"p1",n:"Cambio de molde",area:"Producción",ini:"Fin de la orden anterior",fin:"Primeras piezas aprobadas con el molde nuevo",p:[
+   ["Preparar molde, utillajes y material de la siguiente orden","prep"],["Secar o precalentar el material si lo requiere","prep"],["Parar la máquina y vaciar el cilindro","ejec"],
+   ["Desconectar refrigeración y conexiones del molde","ejec"],["Desmontar el molde y llevarlo a su ubicación","ejec"],["Montar y amarrar el molde nuevo","ejec"],
+   ["Conectar refrigeración, cámara caliente y expulsores","ejec"],["Cargar los parámetros de la receta del molde","ejec"],["Purgar el material o el color anterior","ejec"],
+   ["Inyectar primeras piezas y ajustar parámetros","ctrl"],["Aprobar primeras piezas (medidas y aspecto)","ctrl"],["Limpiar, revisar y guardar el molde desmontado","fin"]]},
+  {id:"p2",n:"Producción de una orden de inyección",area:"Producción",ini:"Orden lanzada con el molde montado",fin:"Piezas embaladas en almacén y orden cerrada",p:[
+   ["Recibir la orden y la pauta de control","ini"],["Abastecer material y colorante a la máquina","prep"],["Arrancar y estabilizar el proceso","prep"],["Producir las piezas","ejec"],
+   ["Retirar coladas y rebabas","ejec"],["Controlar las piezas según la pauta (medidas y aspecto)","ctrl"],["Separar las piezas defectuosas y registrar el rechazo","ctrl"],
+   ["Moler coladas y mermas reutilizables","ejec"],["Embalar e identificar las piezas","fin"],["Trasladar al almacén","fin"],["Declarar la producción y cerrar la orden","fin"]]}
+ ],
+ log:[
+  {id:"l1",n:"Recepción de mercancía",area:"Logística",ini:"Aviso o llegada del transportista",fin:"Mercancía ubicada y disponible en el sistema",p:[
+   ["Planificar la llegada (cita de descarga y pedido previsto)","ini"],["Recibir al transportista y revisar la documentación","ini"],["Descargar la mercancía","ejec"],
+   ["Contar bultos y comprobar contra albarán y pedido","ctrl"],["Inspeccionar daños y calidad","ctrl"],["Gestionar discrepancias (faltas, daños o rechazo)","ctrl"],
+   ["Registrar la entrada en el sistema","fin"],["Etiquetar la mercancía","fin"],["Ubicar en su posición y confirmar la ubicación","fin"]]},
+  {id:"l2",n:"Preparación y expedición de pedidos",area:"Logística",ini:"Pedido de cliente liberado",fin:"Mercancía entregada al transportista con el albarán firmado",p:[
+   ["Recibir y liberar los pedidos a preparar","ini"],["Lanzar las órdenes de picking","prep"],["Recorrer el almacén y recoger los artículos (picking)","ejec"],["Verificar el pedido preparado","ctrl"],
+   ["Embalar y proteger","ejec"],["Etiquetar y generar albarán y documentos de transporte","ejec"],["Consolidar en la zona de expedición","ejec"],["Esperar al transportista","ejec"],
+   ["Cargar el camión","ejec"],["Confirmar la salida en el sistema y avisar al cliente","fin"]]},
+  {id:"l3",n:"Inventario cíclico",area:"Logística",ini:"Listado de ubicaciones a contar",fin:"Stock del sistema ajustado y diferencias analizadas",p:[
+   ["Generar el listado de ubicaciones a contar","ini"],["Bloquear los movimientos de esas ubicaciones","prep"],["Contar físicamente","ejec"],["Comparar con el stock del sistema","ctrl"],
+   ["Recontar las diferencias","ctrl"],["Investigar la causa de las diferencias","ctrl"],["Ajustar el stock en el sistema","fin"],["Desbloquear las ubicaciones","fin"]]},
+  {id:"l4",n:"Devolución de cliente",area:"Logística",ini:"Solicitud de devolución del cliente",fin:"Mercancía con destino decidido y abono o reposición emitidos",p:[
+   ["Recibir y autorizar la solicitud de devolución","ini"],["Recibir la mercancía devuelta","ejec"],["Inspeccionar el estado de la mercancía","ctrl"],
+   ["Decidir el destino (stock, reparación, achatarrar o proveedor)","ctrl"],["Registrar la devolución en el sistema","fin"],["Reubicar o retirar la mercancía","fin"],["Emitir el abono o la reposición","fin"]]}
+ ],
+ sani:[
+  {id:"s1",n:"Fabricación y acondicionamiento de un lote (GMP)",area:"Producción",ini:"Orden de fabricación y registro de lote emitidos",fin:"Lote acondicionado en cuarentena a la espera de liberación",p:[
+   ["Emitir la orden y el registro de lote","ini"],["Dispensar y pesar las materias primas con doble verificación","prep"],
+   ["Despeje de línea (line clearance) verificado por un segundo responsable","ctrl"],["Apertura de línea: verificar materiales, lote, caducidad y ajustes","prep"],
+   ["Fabricar según el procedimiento","ejec"],["Hacer los controles en proceso","ctrl"],["Acondicionar: envasar, etiquetar y codificar lote y caducidad","ejec"],
+   ["Verificar codificación y etiquetado","ctrl"],["Conciliar materiales impresos y rendimiento","ctrl"],["Limpiar la línea y registrar la limpieza","fin"],
+   ["Completar y revisar el registro de lote","fin"],["Trasladar a cuarentena","fin"]]},
+  {id:"s2",n:"Liberación de lote por calidad",area:"Calidad",ini:"Registro de lote completado",fin:"Lote liberado o rechazado en el sistema",p:[
+   ["Recibir el registro de lote completo","ini"],["Revisar el registro de lote y las firmas","ctrl"],["Comprobar los resultados de control de calidad","ctrl"],
+   ["Revisar desviaciones y cambios abiertos","ctrl"],["Esperar resultados pendientes (ensayos o esterilidad)","ejec"],["Certificar el lote por la Persona Cualificada (medicamentos)","ctrl"],["Decidir la liberación o el rechazo","ctrl"],
+   ["Cambiar el estado del lote en el sistema","fin"],["Archivar la documentación","fin"]]},
+  {id:"s3",n:"Esterilización de producto o material",area:"Producción",ini:"Material limpio y embalado para esterilizar",fin:"Carga esterilizada, liberada y almacenada",p:[
+   ["Recibir el material limpio y revisarlo","ini"],["Empaquetar y etiquetar","prep"],["Preparar la carga según la configuración validada","prep"],
+   ["Comprobar el equipo (prueba de vacío o de penetración)","ctrl"],["Ejecutar el ciclo de esterilización","ejec"],["Revisar parámetros e indicadores del ciclo","ctrl"],["Esperar la incubación de los indicadores biológicos (si se usan)","ejec"],
+   ["Esperar el enfriamiento o la aireación","ejec"],["Liberar la carga y registrar el ciclo","fin"],["Almacenar el material esterilizado","fin"]]},
+  {id:"s4",n:"Gestión de una desviación o no conformidad",area:"Calidad",ini:"Detección de la desviación",fin:"Acciones cerradas y eficacia verificada",p:[
+   ["Detectar y comunicar la desviación","ini"],["Contener: bloquear el producto afectado","ini"],["Registrar la desviación","ini"],["Evaluar el impacto y clasificar el riesgo","ctrl"],
+   ["Investigar la causa raíz","ejec"],["Definir acciones correctivas y preventivas (CAPA)","ejec"],["Aprobar el plan de acciones","ctrl"],["Implantar las acciones","ejec"],
+   ["Verificar la eficacia y cerrar","fin"]]}
+ ],
+ quim:[
+  {id:"q1",n:"Fabricación de un lote en reactor",area:"Producción",ini:"Orden de fabricación emitida",fin:"Producto envasado, etiquetado y en espera de liberación",p:[
+   ["Emitir la orden y la fórmula del lote","ini"],["Verificar que el reactor está limpio y disponible","prep"],["Comprobar los EPIs y las condiciones de seguridad del puesto","prep"],
+   ["Pesar o dosificar las materias primas","prep"],["Cargar las materias primas en el orden establecido","ejec"],["Reaccionar controlando temperatura, presión y agitación","ejec"],
+   ["Tomar muestra y esperar el análisis de control en proceso","ctrl"],["Ajustar el lote si está fuera de especificación","ctrl"],["Enfriar, filtrar o acondicionar","ejec"],
+   ["Descargar y envasar","ejec"],["Etiquetar con lote y pictogramas de peligro","fin"],["Limpiar el reactor","fin"],["Registrar los datos del lote","fin"]]},
+  {id:"q2",n:"Limpieza de equipo entre productos",area:"Producción",ini:"Fin del lote del producto anterior",fin:"Equipo limpio, verificado y liberado",p:[
+   ["Vaciar el equipo","ini"],["Aislar el equipo y obtener el permiso de trabajo","prep"],["Lavar con disolvente o agua según el procedimiento","ejec"],["Aclarar","ejec"],
+   ["Tomar muestra del agua o disolvente de aclarado","ctrl"],["Esperar el resultado del análisis","ejec"],["Repetir la limpieza si no cumple","ctrl"],["Secar el equipo","ejec"],
+   ["Gestionar los residuos de limpieza","fin"],["Registrar la limpieza y liberar el equipo","fin"]]}
+ ],
+ auto:[
+  {id:"u1",n:"Montaje en línea",area:"Producción",ini:"Orden o secuencia de montaje recibida",fin:"Conjunto montado, probado y entregado a expedición",p:[
+   ["Recibir la secuencia o la orden de montaje","ini"],["Abastecer componentes a pie de línea","prep"],["Verificar las referencias de los componentes","ctrl"],["Montar los subconjuntos","ejec"],
+   ["Montar el conjunto principal","ejec"],["Apretar a par y registrar los aprietes","ejec"],["Hacer la prueba funcional o de estanqueidad","ctrl"],["Inspeccionar visualmente","ctrl"],
+   ["Reparar o retrabajar los rechazos","ctrl"],["Etiquetar y registrar la trazabilidad","fin"],["Embalar y entregar a expedición","fin"]]},
+  {id:"u2",n:"Arranque de turno de una línea",area:"Producción",ini:"Inicio del turno",fin:"Línea produciendo con la primera pieza validada",p:[
+   ["Hacer el relevo de turno y revisar las incidencias","ini"],["Revisar el plan de producción del turno","ini"],["Hacer la reunión de inicio de turno","ini"],
+   ["Revisar el puesto con el checklist de mantenimiento autónomo","prep"],["Verificar los poka-yokes y los dispositivos de seguridad","ctrl"],["Abastecer componentes","prep"],
+   ["Validar la primera pieza","ctrl"],["Arrancar la producción","ejec"]]},
+  {id:"u3",n:"Gestión de una reclamación de cliente (8D)",area:"Calidad",ini:"Recepción de la reclamación",fin:"Reclamación cerrada y aceptada por el cliente",p:[
+   ["Recibir y registrar la reclamación","ini"],["Formar el equipo de trabajo (D1)","ini"],["Describir el problema (D2)","ejec"],
+   ["Contener: bloquear y seleccionar el stock en planta, tránsito y cliente (D3)","ejec"],["Analizar la causa raíz (D4)","ejec"],["Definir las acciones correctivas (D5)","ejec"],
+   ["Implantar y validar las acciones (D6)","ejec"],["Prevenir la repetición: actualizar AMFE, plan de control e instrucciones (D7)","ejec"],["Cerrar con el cliente y reconocer al equipo (D8)","fin"]]}
+ ],
+ admin:[
+  {id:"d1",n:"Recepción y contabilización de facturas de proveedor",area:"Administración",ini:"Llega una factura de proveedor",fin:"Factura contabilizada y programada para pago",p:[
+   ["Recibir la factura (correo, papel o factura electrónica)","ini"],["Registrar la factura y sus datos","ejec"],["Cotejar la factura con el pedido y el albarán","ctrl"],
+   ["Resolver discrepancias con el proveedor o con compras","ctrl"],["Aprobar la factura por el responsable","ctrl"],["Contabilizar la factura","ejec"],
+   ["Programar el pago según su vencimiento","fin"],["Archivar la factura con el pedido y el albarán","fin"]]},
+  {id:"d2",n:"Pago a proveedores",area:"Administración",ini:"Facturas aprobadas próximas a vencer",fin:"Pagos realizados y conciliados con el banco",p:[
+   ["Extraer las facturas que vencen","ini"],["Comprobar la previsión de tesorería","ctrl"],["Preparar la remesa de pagos","prep"],["Aprobar la remesa","ctrl"],
+   ["Enviar la remesa al banco","ejec"],["Contabilizar los pagos","ejec"],["Conciliar los pagos con el extracto bancario","ctrl"],["Comunicar el pago a los proveedores que lo piden","fin"]]},
+  {id:"d3",n:"Facturación a clientes",area:"Administración",ini:"Pedido entregado o servicio prestado",fin:"Factura emitida, enviada y registrada",p:[
+   ["Recibir los albaranes o partes de servicio a facturar","ini"],["Comprobar precios, cantidades y condiciones","ctrl"],["Generar la factura","ejec"],
+   ["Revisar la factura antes de emitirla","ctrl"],["Emitir y enviar la factura al cliente","ejec"],["Registrar la factura y el vencimiento del cobro","fin"],["Archivar la factura","fin"]]},
+  {id:"d4",n:"Gestión de cobros e impagados",area:"Administración",ini:"Factura de cliente próxima a vencer",fin:"Cobro conciliado o deuda en gestión de recobro",p:[
+   ["Revisar los vencimientos de cobro","ini"],["Recordar el pago al cliente antes del vencimiento","ejec"],["Comprobar los cobros en el banco","ctrl"],
+   ["Conciliar los cobros con las facturas","ctrl"],["Reclamar las facturas vencidas","ejec"],["Esperar la respuesta del cliente","ejec"],
+   ["Escalar los impagados (comercial, dirección o recobro)","ctrl"],["Registrar el cobro o la incidencia","fin"]]},
+  {id:"d5",n:"Alta de cliente o proveedor",area:"Administración",ini:"Solicitud de alta de un cliente o proveedor nuevo",fin:"Ficha creada y validada en el ERP",p:[
+   ["Recibir la solicitud de alta","ini"],["Pedir los datos fiscales, bancarios y de contacto","prep"],["Esperar la documentación","ejec"],
+   ["Comprobar los datos (NIF y titularidad de la cuenta)","ctrl"],["Aprobar el alta y las condiciones de pago","ctrl"],["Crear la ficha en el ERP","ejec"],
+   ["Comunicar el alta al solicitante","fin"],["Archivar la documentación","fin"]]},
+  {id:"d6",n:"Cierre contable mensual",area:"Administración",ini:"Fin de mes",fin:"Cierre aprobado e informe enviado a dirección",p:[
+   ["Fijar el calendario de cierre","ini"],["Contabilizar las facturas pendientes del mes","ejec"],["Conciliar los bancos","ctrl"],["Registrar periodificaciones y amortizaciones","ejec"],
+   ["Revisar las cuentas y las partidas pendientes","ctrl"],["Corregir los errores encontrados","ctrl"],["Preparar el informe mensual","ejec"],["Revisar y aprobar el cierre","ctrl"],
+   ["Enviar el informe a dirección","fin"]]},
+  {id:"d7",n:"Nóminas del mes",area:"Administración",ini:"Incidencias del mes recibidas",fin:"Nóminas pagadas y enviadas, seguros sociales presentados",p:[
+   ["Recoger las incidencias del mes (altas, bajas, horas y ausencias)","ini"],["Esperar las incidencias que faltan","ejec"],["Introducir las incidencias en el programa de nóminas","ejec"],
+   ["Calcular las nóminas","ejec"],["Revisar las nóminas","ctrl"],["Aprobar las nóminas","ctrl"],["Pagar las nóminas","ejec"],["Enviar las nóminas a los trabajadores","fin"],
+   ["Presentar los seguros sociales y los impuestos","fin"],["Contabilizar las nóminas","fin"]]},
+  {id:"d8",n:"Notas de gastos",area:"Administración",ini:"Empleado con gastos de viaje o de representación",fin:"Gastos reembolsados y contabilizados",p:[
+   ["Recoger los tiques y justificantes","ini"],["Rellenar la nota de gastos","ejec"],["Remitir la nota a administración","ejec"],
+   ["Comprobar justificantes e importes según la política de gastos","ctrl"],["Aprobar la nota por el responsable","ctrl"],["Contabilizar los gastos","ejec"],
+   ["Reembolsar al empleado","fin"],["Archivar los justificantes","fin"]]}
+ ],
+ salud:[
+  {id:"h1",n:"Cita y consulta externa",area:"Asistencial",ini:"El paciente pide cita",fin:"Paciente atendido con informe y siguiente cita",p:[
+   ["Recibir la petición de cita","ini"],["Dar la cita según la agenda","ejec"],["Recordar la cita al paciente","ejec"],["Recibir al paciente y hacer la admisión","ejec"],
+   ["Identificar al paciente y comprobar sus datos","ctrl"],["Esperar en la sala de espera","ejec"],["Atender la consulta","ejec"],["Pedir pruebas o derivar si hace falta","ejec"],
+   ["Registrar la consulta en la historia clínica","fin"],["Entregar el informe y dar la siguiente cita","fin"]]},
+  {id:"h2",n:"Atención en urgencias",area:"Asistencial",ini:"Llegada del paciente a urgencias",fin:"Alta, ingreso o traslado del paciente",p:[
+   ["Admisión y registro del paciente","ini"],["Poner la pulsera identificativa","ctrl"],["Triaje: valorar y asignar la prioridad","ctrl"],["Esperar según la prioridad asignada","ejec"],
+   ["Reevaluar a los pacientes que esperan","ctrl"],["Valoración médica","ejec"],["Pedir pruebas (analítica o imagen)","ejec"],["Esperar los resultados","ejec"],
+   ["Aplicar el tratamiento","ejec"],["Decidir el destino: alta, ingreso u observación","ctrl"],["Entregar el informe de alta o trasladar a planta","fin"],["Limpiar y preparar el box","fin"]]},
+  {id:"h3",n:"Analítica: de la petición al resultado",area:"Asistencial",ini:"El médico pide la analítica",fin:"Resultado validado disponible en la historia clínica",p:[
+   ["Recibir la petición de analítica","ini"],["Citar al paciente para la extracción","ejec"],["Identificar al paciente y etiquetar los tubos","ctrl"],["Hacer la extracción","ejec"],
+   ["Trasladar las muestras al laboratorio","ejec"],["Recibir y registrar las muestras","ejec"],["Rechazar o pedir de nuevo las muestras no válidas","ctrl"],["Analizar las muestras","ejec"],
+   ["Validar los resultados","ctrl"],["Comunicar los valores críticos al médico","ctrl"],["Publicar el resultado en la historia clínica","fin"]]},
+  {id:"h4",n:"Cirugía programada",area:"Asistencial",ini:"Paciente en lista de espera quirúrgica",fin:"Paciente en reanimación con la intervención registrada",p:[
+   ["Programar la intervención","ini"],["Hacer el preoperatorio y la valoración anestésica","prep"],["Firmar el consentimiento informado","prep"],
+   ["Preparar el quirófano, el instrumental y el material","prep"],["Recibir e identificar al paciente en el área quirúrgica","ctrl"],
+   ["Entrada: verificar identidad, procedimiento, sitio y consentimiento antes de la anestesia","ctrl"],["Anestesiar al paciente","ejec"],
+   ["Pausa quirúrgica: confirmación del equipo antes de la incisión","ctrl"],["Realizar la intervención","ejec"],["Salida: recuento de material y etiquetado de muestras","ctrl"],
+   ["Trasladar a reanimación","ejec"],["Registrar la intervención","fin"],["Limpiar y preparar el quirófano","fin"]]},
+  {id:"h5",n:"Medicación en planta: de la prescripción a la administración",area:"Asistencial",ini:"Prescripción médica",fin:"Medicación administrada y registrada",p:[
+   ["Recibir y validar la prescripción en farmacia","ini"],["Preparar la medicación en dosis unitarias","prep"],["Enviar la medicación a la planta","ejec"],["Comprobar la medicación recibida","ctrl"],
+   ["Preparar la dosis del paciente","prep"],["Identificar al paciente y comprobar fármaco, dosis, vía y hora","ctrl"],["Administrar la medicación","ejec"],["Registrar la administración","fin"],
+   ["Vigilar la respuesta y los efectos adversos","ctrl"]]},
+  {id:"h6",n:"Ingreso y alta hospitalaria",area:"Asistencial",ini:"Orden de ingreso",fin:"Paciente dado de alta con informe y cama libre",p:[
+   ["Recibir la orden de ingreso","ini"],["Asignar la cama","ejec"],["Esperar a que la cama esté limpia y libre","ejec"],["Acoger al paciente y valorarlo al ingreso","ejec"],
+   ["Conciliar la medicación habitual","ctrl"],["Planificar los cuidados","prep"],["Decidir el alta","ctrl"],["Preparar el informe de alta y las recetas","ejec"],
+   ["Explicar el alta al paciente y a la familia","fin"],["Liberar la cama y avisar a limpieza","fin"]]},
+  {id:"h7",n:"Limpieza de habitación tras el alta",area:"Asistencial",ini:"Aviso de alta",fin:"Habitación limpia y disponible",p:[
+   ["Recibir el aviso de habitación libre","ini"],["Retirar la ropa de cama y los residuos","ejec"],["Limpiar y desinfectar superficies, cama y baño","ejec"],
+   ["Reponer el material de la habitación","ejec"],["Revisar la limpieza","ctrl"],["Comunicar que la habitación está disponible","fin"]]}
+ ],
+ resid:[
+  {id:"r1",n:"Ingreso de un nuevo residente",area:"Asistencial",ini:"Plaza asignada",fin:"Residente acogido con su plan de atención individualizada",p:[
+   ["Recibir la solicitud y asignar la plaza","ini"],["Pedir la documentación y los informes médicos","prep"],["Preparar la habitación","prep"],["Marcar la ropa del residente","prep"],["Recibir al residente y a la familia","ejec"],
+   ["Firmar el contrato y completar el alta administrativa","ejec"],["Hacer la valoración geriátrica integral (médica, enfermería, fisioterapia, terapia ocupacional y trabajo social)","ejec"],
+   ["Valorar los riesgos (caídas, úlceras y desnutrición)","ctrl"],["Elaborar el plan de atención individualizada","ejec"],["Acordar el plan con el residente y la familia","ctrl"],
+   ["Revisar la adaptación tras las primeras semanas","ctrl"]]},
+  {id:"r2",n:"Preparación y administración de medicación",area:"Asistencial",ini:"Pauta médica del residente",fin:"Medicación administrada y registrada",p:[
+   ["Recibir y actualizar la pauta médica","ini"],["Pedir la medicación a la farmacia","prep"],["Recibir y comprobar la medicación","ctrl"],
+   ["Preparar los pastilleros o el sistema de dosificación personalizada","prep"],["Revisar los pastilleros por una segunda persona","ctrl"],
+   ["Identificar al residente y comprobar fármaco, dosis, vía y hora","ctrl"],["Administrar la medicación y comprobar que la toma","ejec"],
+   ["Registrar la administración o el motivo de no darla","fin"],["Avisar a enfermería o al médico si hay incidencias","fin"]]},
+  {id:"r3",n:"Aseo e higiene matinal",area:"Asistencial",ini:"Inicio del turno de mañana",fin:"Residente aseado, vestido y en el comedor",p:[
+   ["Revisar el plan de cuidados y las incidencias de la noche","ini"],["Preparar el material de aseo y la ropa","prep"],["Despertar y levantar al residente con la ayuda que necesite","ejec"],
+   ["Hacer el aseo o la ducha","ejec"],["Cambiar el absorbente si lo usa","ejec"],["Revisar el estado de la piel","ctrl"],["Vestir y arreglar al residente","ejec"],
+   ["Acompañar al comedor","ejec"],["Hacer la cama y ordenar la habitación","fin"],["Registrar el aseo y las incidencias","fin"]]},
+  {id:"r4",n:"Servicio de comidas",area:"Asistencial",ini:"Menú y dietas del día",fin:"Comidas servidas, ingesta registrada y comedor recogido",p:[
+   ["Revisar las dietas, texturas y alergias de cada residente","ini"],["Preparar los platos según la dieta y la textura","prep"],["Trasladar la comida al comedor o a las plantas","ejec"],
+   ["Acompañar y sentar a los residentes","ejec"],["Servir comprobando la dieta de cada residente","ctrl"],["Ayudar a comer a quien lo necesite","ejec"],["Hidratar a los residentes","ejec"],
+   ["Registrar la ingesta","fin"],["Recoger y limpiar el comedor","fin"]]},
+  {id:"r5",n:"Actuación ante una caída",area:"Asistencial",ini:"Se detecta una caída",fin:"Caída registrada, familia informada y prevención revisada",p:[
+   ["Detectar la caída y avisar a enfermería","ini"],["Valorar si hay lesiones antes de mover al residente","ctrl"],
+   ["Avisar al médico o a emergencias si hay lesión o sospecha de fractura","ejec"],["Levantar al residente con la técnica adecuada si no hay lesión grave","ejec"],["Vigilar al residente durante las horas siguientes","ctrl"],["Registrar la caída (hora, lugar y circunstancias)","fin"],
+   ["Informar a la familia","fin"],["Analizar la causa y revisar las medidas de prevención","ctrl"]]},
+  {id:"r6",n:"Cambios posturales y prevención de úlceras",area:"Asistencial",ini:"Residente con riesgo de úlceras por presión",fin:"Cambios hechos y registrados según el plan",p:[
+   ["Valorar el riesgo de úlceras por presión","ini"],["Pautar la frecuencia de los cambios posturales","prep"],["Preparar las superficies especiales y los cojines","prep"],
+   ["Hacer el cambio postural","ejec"],["Revisar e hidratar la piel","ctrl"],["Registrar el cambio y el estado de la piel","fin"],["Avisar a enfermería si aparece una lesión","fin"]]},
+  {id:"r7",n:"Relevo de turno",area:"Asistencial",ini:"Fin del turno",fin:"Turno entrante informado de todas las incidencias",p:[
+   ["Revisar los registros del turno","ini"],["Preparar el parte de incidencias","prep"],["Reunirse con el turno entrante","ejec"],["Transmitir las incidencias de cada residente","ejec"],
+   ["Resolver las dudas del turno entrante","ctrl"],["Firmar o registrar el relevo","fin"]]},
+  {id:"r8",n:"Lavandería y ropa del residente",area:"Asistencial",ini:"Ropa sucia en las plantas",fin:"Ropa limpia en el armario de cada residente",p:[
+   ["Recoger la ropa sucia separada","ini"],["Trasladar la ropa a la lavandería","ejec"],["Lavar y secar","ejec"],
+   ["Planchar y doblar","ejec"],["Clasificar la ropa por residente","ctrl"],["Repartir la ropa en las habitaciones","fin"],["Registrar las prendas perdidas o dañadas","fin"]]}
+ ],
+ comun:[
+  {id:"t1",n:"Compra de material",area:"Compras",ini:"Necesidad de material detectada",fin:"Material recibido y factura conformada",p:[
+   ["Detectar la necesidad y crear la solicitud","ini"],["Aprobar la solicitud","ctrl"],["Pedir ofertas a proveedores","ejec"],["Comparar ofertas y elegir proveedor","ejec"],
+   ["Crear el pedido en el ERP","ejec"],["Aprobar el pedido","ctrl"],["Enviar el pedido al proveedor","ejec"],["Confirmar la fecha de entrega","ejec"],
+   ["Hacer seguimiento y reclamar retrasos","ejec"],["Recibir el material","fin"],["Conformar la factura contra pedido y albarán","fin"]]},
+  {id:"t2",n:"Pedido de cliente hasta la entrega",area:"Administración",ini:"Pedido recibido del cliente",fin:"Pedido entregado, facturado y cobrado",p:[
+   ["Recibir el pedido del cliente","ini"],["Revisar precio, cantidad y plazo","ctrl"],["Comprobar stock o capacidad","ejec"],["Registrar el pedido en el ERP","ejec"],
+   ["Confirmar el pedido y la fecha al cliente","ejec"],["Planificar la fabricación o la preparación","ejec"],["Fabricar o preparar el pedido","ejec"],["Expedir el pedido","fin"],
+   ["Facturar","fin"],["Hacer seguimiento del cobro","fin"]]},
+  {id:"t3",n:"Reparación de una avería",area:"Mantenimiento",ini:"Aviso de avería",fin:"Máquina funcionando e intervención registrada",p:[
+   ["Recibir el aviso de avería","ini"],["Desplazarse a la máquina","ejec"],["Consignar la máquina (bloqueo y etiquetado)","prep"],["Diagnosticar la avería","ejec"],
+   ["Buscar o pedir el repuesto","ejec"],["Esperar el repuesto","ejec"],["Reparar","ejec"],["Probar la máquina y entregarla a producción","ctrl"],
+   ["Retirar la consignación y limpiar la zona","fin"],["Registrar la intervención","fin"]]},
+  {id:"t4",n:"Planificación semanal de la producción",area:"Planificación",ini:"Pedidos y previsiones de la semana",fin:"Plan publicado y comunicado",p:[
+   ["Extraer pedidos, previsiones y stock","ini"],["Revisar la capacidad disponible","ejec"],["Comprobar la disponibilidad de materiales","ctrl"],["Secuenciar las órdenes","ejec"],
+   ["Validar el plan con producción y compras","ctrl"],["Publicar y comunicar el plan","fin"],["Replanificar por urgencias o incidencias","ejec"]]}
+ ]
+};
+var TPLBY={}; Object.keys(TPL).forEach(function(s){TPL[s].forEach(function(t){TPLBY[t.id]=t;});});
+
+/* ================= Preguntas de control: pasos que se suelen olvidar ================= */
+/* kw: expresión que busca el paso en los nombres (en minúsculas y sin acentos) */
+var CHK_G=[
+ {id:"g_ini",q:"¿Está el paso que pone en marcha el proceso?",ej:"La orden, el pedido, el aviso o la solicitud que hace que alguien empiece.",paso:"Recibir la orden o el aviso que inicia el proceso",fase:"ini",kw:"recib|emit|detect|lanz|aviso|solicitud|llega"},
+ {id:"g_prep",q:"¿Hay que preparar algo antes de empezar?",ej:"Material, herramientas, documentación, programas o la zona de trabajo.",paso:"Preparar material, herramientas y documentación",fase:"prep",kw:"prepar|abastec|cargar|dispens|pesar|reglar"},
+ {id:"g_esp",q:"¿Se queda parado esperando algo o a alguien?",ej:"Una aprobación, un material, un análisis, una máquina o un transportista.",paso:"Esperar a tener lo necesario para continuar",fase:"ejec",kw:"esper"},
+ {id:"g_apr",q:"¿Alguien tiene que aprobar, firmar o dar el visto bueno?",ej:"Un responsable, calidad, el cliente o el propio sistema.",paso:"Aprobar o firmar",fase:"ctrl",kw:"aprobar|firmar|liberar|validar|certificar|visto bueno|autorizar"},
+ {id:"g_tras",q:"¿Se lleva material, documentos o datos a otra zona, persona o sistema?",ej:"Traslados entre zonas, entregas al siguiente puesto, envíos por correo.",paso:"Trasladar al siguiente puesto o zona",fase:"ejec",kw:"trasladar|llevar|transportar|mover|enviar"},
+ {id:"g_ctrl",q:"¿Se comprueba que el resultado es correcto?",ej:"Inspección, medición, verificación, prueba funcional o análisis.",paso:"Comprobar o inspeccionar el resultado",fase:"ctrl",kw:"comprobar|controlar|controles|control de|inspeccionar|verificar|medir|prueba|probar"},
+ {id:"g_err",q:"¿Qué se hace cuando algo sale mal?",ej:"Retrabajo, reparación, rechazo o reclamación al proveedor.",paso:"Gestionar el rechazo o rehacer",fase:"ctrl",kw:"rehacer|retrabaj|reparar|rechazo|rechazar|corregir|no conforme|discrepancia"},
+ {id:"g_reg",q:"¿Se registra algo en papel o en un sistema?",ej:"ERP, hoja de registro, parte de trabajo o trazabilidad.",paso:"Registrar en el sistema",fase:"fin",kw:"registrar|declarar|anotar|en el erp|en el sistema|parte de trabajo"},
+ {id:"g_limp",q:"¿Hay que limpiar u ordenar al terminar?",ej:"Limpiar la máquina, la zona o los útiles y devolver las herramientas a su sitio.",paso:"Limpiar y ordenar la zona",fase:"fin",kw:"limpiar|ordenar|guardar"},
+ {id:"g_fin",q:"¿Está el paso en que el resultado llega a quien lo necesita?",ej:"Entrega al cliente, al almacén o al siguiente proceso, o aviso de que está terminado.",paso:"Entregar el resultado y avisar al siguiente proceso",fase:"fin",kw:"entregar|almacenar|ubicar|comunicar|avisar|expedir|publicar|archivar|cerrar la orden|trasladar al almacen|trasladar a cuarentena|liberar el lote|liberar la"}
+];
+var CHK_S={
+ prod:[
+  {id:"pr_1pz",q:"¿Se valida la primera pieza al arrancar o tras un cambio?",ej:"Medición o inspección antes de producir la serie.",paso:"Validar la primera pieza",fase:"ctrl",kw:"primera pieza|primeras piezas"},
+  {id:"pr_doc",q:"¿Se comprueba que la documentación está vigente?",ej:"Plano, instrucción de trabajo y pauta de control en su última versión.",paso:"Comprobar la documentación vigente (plano, instrucción y pauta)",fase:"prep",kw:"documentacion|plano|instruccion"},
+  {id:"pr_mat",q:"¿Se comprueba que hay material suficiente y correcto antes de empezar?",ej:"Referencia, lote y cantidad en el puesto.",paso:"Comprobar el material antes de empezar",fase:"prep",kw:"disponibilidad de materiales|comprobar el material|abastec|preparar el material en"},
+  {id:"pr_seg",q:"¿Hay comprobaciones de seguridad antes de trabajar?",ej:"Resguardos, EPIs, consignación de la máquina.",paso:"Comprobar resguardos, EPIs y consignación",fase:"prep",kw:"comprobar la seguridad|comprobar resguardos|dispositivos de seguridad|epi|consign|resguard"},
+  {id:"pr_decl",q:"¿Se declara la producción (piezas buenas, malas y tiempos)?",ej:"En el ERP, en el MES o en el parte de producción.",paso:"Declarar la producción",fase:"fin",kw:"declarar"},
+  {id:"pr_par",q:"¿Se registran las paradas y sus causas?",ej:"Base para el OEE y para atacar las paradas que se repiten.",paso:"Registrar las paradas y sus causas",fase:"fin",kw:"registrar la parada|paradas"},
+  {id:"pr_nc",q:"¿Se identifica y segrega el producto no conforme?",ej:"Para que no siga en el proceso ni llegue al cliente por error.",paso:"Identificar y segregar el producto no conforme",fase:"ctrl",kw:"segreg|no conforme"}],
+ metal:[
+  {id:"m_1pz",q:"¿Se valida la primera pieza antes de lanzar la serie?",ej:"Medición contra plano tras montar programa y herramientas.",paso:"Verificar la primera pieza contra plano",fase:"ctrl",kw:"primera pieza"},
+  {id:"m_desb",q:"¿Hay desbarbado, limpieza de viruta o protección de las piezas?",ej:"Rebabas, aceite de corte, protección contra la oxidación.",paso:"Desbarbar, limpiar y proteger las piezas",fase:"ejec",kw:"desbarb|proteger"},
+  {id:"m_herr",q:"¿Se miden o cambian herramientas por desgaste?",ej:"Cambio de plaquitas, medición de longitud y radio.",paso:"Medir o cambiar las herramientas desgastadas",fase:"prep",kw:"medir|desgast"}],
+ alim:[
+  {id:"a_pcc",q:"¿Se registran los puntos de control crítico (APPCC)?",ej:"Temperatura, tiempo, detector de metales.",paso:"Registrar los puntos de control crítico",fase:"ctrl",kw:"control critico|pcc|temperatura|detector"},
+  {id:"a_alerg",q:"¿Se controla la contaminación cruzada por alérgenos?",ej:"Orden de fabricación, limpieza entre productos, separación en almacén.",paso:"Verificar la limpieza y la separación de alérgenos",fase:"prep",kw:"alergen"},
+  {id:"a_traz",q:"¿Se registra la trazabilidad de los lotes?",ej:"Lotes de ingredientes usados y lote del producto terminado.",paso:"Registrar la trazabilidad de los lotes",fase:"fin",kw:"trazab|lote"},
+  {id:"a_ld",q:"¿Se limpia y desinfecta según el plan de limpieza?",ej:"Al cambiar de producto o al terminar la jornada.",paso:"Limpiar y desinfectar según el plan",fase:"fin",kw:"desinfec"}],
+ plast:[
+  {id:"p_sec",q:"¿Hay que secar o acondicionar el material antes de inyectar?",ej:"Materiales que absorben humedad, como PA, PC o PET.",paso:"Secar o acondicionar el material",fase:"prep",kw:"secar|acondicion"},
+  {id:"p_purga",q:"¿Se purga el cilindro por cambio de material o de color?",ej:"Restos del material anterior en el husillo.",paso:"Purgar el cilindro",fase:"ejec",kw:"purg"},
+  {id:"p_1pz",q:"¿Se aprueban las primeras piezas?",ej:"Medidas y aspecto antes de producir la orden.",paso:"Aprobar las primeras piezas",fase:"ctrl",kw:"primeras piezas|primera pieza"},
+  {id:"p_mol",q:"¿Se gestionan coladas y mermas (moler, reciclar o achatarrar)?",ej:"Coladas frías, piezas de arranque y rechazos.",paso:"Gestionar coladas y mermas",fase:"ejec",kw:"colad|merma|moler"},
+  {id:"p_molde",q:"¿Se limpia, revisa y guarda el molde al desmontarlo?",ej:"Mantenimiento preventivo del molde antes de la siguiente orden.",paso:"Limpiar, revisar y guardar el molde",fase:"fin",kw:"guardar el molde|revisar.*molde"}],
+ log:[
+  {id:"l_cita",q:"¿Se planifica la llegada o la salida del camión?",ej:"Cita de carga o descarga y muelle asignado.",paso:"Dar cita al transportista",fase:"ini",kw:"cita|planific"},
+  {id:"l_disc",q:"¿Qué se hace con faltas, sobrantes o daños?",ej:"Anotar en el albarán, apartar, avisar a compras o al proveedor.",paso:"Gestionar faltas, sobrantes y daños",fase:"ctrl",kw:"discrep|falta|dano"},
+  {id:"l_etiq",q:"¿Se etiqueta la mercancía o los bultos?",ej:"Etiqueta de ubicación, de lote o de envío.",paso:"Etiquetar la mercancía",fase:"fin",kw:"etiquet"},
+  {id:"l_conf",q:"¿Se confirma en el sistema la ubicación o la salida?",ej:"Escaneo de la ubicación o confirmación de la expedición.",paso:"Confirmar el movimiento en el sistema",fase:"fin",kw:"confirm"}],
+ sani:[
+  {id:"s_lc",q:"¿Se hace despeje de línea (line clearance) antes de empezar?",ej:"Retirar materiales, documentos y producto del lote anterior y que lo verifique una segunda persona.",paso:"Despeje de línea verificado por un segundo responsable",fase:"prep",kw:"despeje|line clearance"},
+  {id:"s_doble",q:"¿Hay operaciones con doble verificación?",ej:"Pesada de materias primas, codificación de lote y caducidad.",paso:"Doble verificación de pesada y codificación",fase:"ctrl",kw:"doble verific"},
+  {id:"s_conc",q:"¿Se concilian los materiales impresos y el rendimiento del lote?",ej:"Etiquetas y prospectos usados, destruidos y devueltos.",paso:"Conciliar materiales impresos y rendimiento",fase:"ctrl",kw:"concili"},
+  {id:"s_reg",q:"¿Se revisa el registro de lote antes de liberar?",ej:"Firmas, controles en proceso y desviaciones.",paso:"Revisar el registro de lote",fase:"fin",kw:"revisar el registro|completar y revisar el registro"},
+  {id:"s_cuar",q:"¿El producto queda en cuarentena hasta que calidad lo libera?",ej:"Estado bloqueado en el sistema y zona identificada.",paso:"Trasladar a cuarentena hasta la liberación",fase:"fin",kw:"cuarenten"}],
+ quim:[
+  {id:"q_perm",q:"¿Hace falta permiso de trabajo, EPIs o consignación?",ej:"Trabajos en equipos con producto, espacios confinados o atmósferas peligrosas.",paso:"Obtener el permiso de trabajo y comprobar los EPIs",fase:"prep",kw:"permiso|consignar|consignacion"},
+  {id:"q_mues",q:"¿Se toma muestra y se espera un análisis?",ej:"Control en proceso o liberación del lote.",paso:"Tomar muestra y esperar el análisis",fase:"ctrl",kw:"muestr|analisis"},
+  {id:"q_res",q:"¿Se gestionan residuos o efluentes?",ej:"Disolventes de limpieza, envases vacíos, aguas de lavado.",paso:"Gestionar los residuos",fase:"fin",kw:"residu|efluent"},
+  {id:"q_etq",q:"¿Se etiqueta con lote y pictogramas de peligro?",ej:"Etiquetado del producto envasado.",paso:"Etiquetar con lote y pictogramas de peligro",fase:"fin",kw:"pictogram|etiquet"}],
+ admin:[
+  {id:"d_conc",q:"¿Se cuadra con otro documento (pedido, albarán o banco)?",ej:"Cotejo de factura con pedido y albarán, o de pagos y cobros con el extracto.",paso:"Cotejar con pedido, albarán o extracto bancario",fase:"ctrl",kw:"cotejar|conciliar|cuadrar"},
+  {id:"d_plazo",q:"¿Hay plazos legales o fiscales que cumplir?",ej:"Registro de facturas, impuestos, seguros sociales.",paso:"Comprobar los plazos legales y fiscales",fase:"ctrl",kw:"presentar|plazo|impuesto|seguros sociales"},
+  {id:"d_arch",q:"¿Se archiva o digitaliza la documentación?",ej:"Facturas, contratos y justificantes que hay que conservar.",paso:"Archivar o digitalizar la documentación",fase:"fin",kw:"archivar|digitalizar"},
+  {id:"d_com",q:"¿Hay que comunicar el resultado a otra persona o empresa?",ej:"Proveedor, cliente, trabajador o responsable.",paso:"Comunicar el resultado",fase:"fin",kw:"comunicar|avisar|informar|enviar el informe|enviar las nominas|enviar la factura"}],
+ salud:[
+  {id:"h_id",q:"¿Se identifica al paciente de forma inequívoca antes de actuar?",ej:"Pulsera identificativa y confirmación de sus datos antes de cada prueba, tratamiento o intervención.",paso:"Identificar al paciente y confirmar sus datos",fase:"ctrl",kw:"identificar|identificativa|pulsera"},
+  {id:"h_ci",q:"¿Hace falta consentimiento informado?",ej:"Intervenciones, pruebas invasivas o tratamientos con riesgo.",paso:"Firmar el consentimiento informado",fase:"prep",kw:"consentimiento"},
+  {id:"h_hc",q:"¿Se registra en la historia clínica?",ej:"Lo que se ha hecho, los resultados y las decisiones.",paso:"Registrar en la historia clínica",fase:"fin",kw:"historia clinica"},
+  {id:"h_trasp",q:"¿Se traspasa la información del paciente entre profesionales o turnos?",ej:"Cambio de turno, traslado entre servicios o alta.",paso:"Traspasar la información del paciente de forma estructurada",fase:"fin",kw:"traspasar|traspaso|relevo|cambio de turno"},
+  {id:"h_conc",q:"¿Se concilia la medicación habitual del paciente?",ej:"Comparar lo que toma en casa con lo prescrito al ingreso, en un traslado o al alta.",paso:"Conciliar la medicación habitual",fase:"ctrl",kw:"conciliar la medicacion"},
+  {id:"h_res",q:"¿Se generan residuos sanitarios que hay que separar?",ej:"Punzantes, material contaminado o restos biológicos.",paso:"Separar y eliminar los residuos sanitarios",fase:"fin",kw:"residuo"}],
+ resid:[
+  {id:"r_val",q:"¿Se valoran los riesgos del residente (caídas, úlceras, desnutrición)?",ej:"Al ingreso, tras un cambio de estado y de forma periódica.",paso:"Valorar los riesgos del residente",fase:"ctrl",kw:"valorar los riesgos|valorar el riesgo|riesgo"},
+  {id:"r_pai",q:"¿Se tiene en cuenta o se actualiza el plan de atención individualizada?",ej:"Preferencias, ayudas técnicas y pautas de cuidado de cada residente.",paso:"Revisar el plan de atención individualizada",fase:"prep",kw:"plan de atencion|plan de cuidados"},
+  {id:"r_ident",q:"¿Se comprueba la identidad del residente antes de dar medicación o una dieta especial?",ej:"Sobre todo con personal nuevo o de sustitución.",paso:"Comprobar la identidad del residente",fase:"ctrl",kw:"identificar|identidad"},
+  {id:"r_dieta",q:"¿Se respetan la dieta, la textura y las alergias?",ej:"Dietas especiales, triturados, espesantes y alergias alimentarias.",paso:"Comprobar dieta, textura y alergias",fase:"ctrl",kw:"dieta|textura|alergia"},
+  {id:"r_reg",q:"¿Se registra lo hecho y las incidencias?",ej:"Registro de cuidados, caídas, ingesta o medicación no administrada.",paso:"Registrar los cuidados y las incidencias",fase:"fin",kw:"registrar la ingesta|registrar la caida|registrar el aseo|registrar el cambio|motivo de no darla"},
+  {id:"r_fam",q:"¿Se informa a la familia cuando corresponde?",ej:"Caídas, cambios de salud o del plan de atención.",paso:"Informar a la familia",fase:"fin",kw:"informar a la familia|avisar a la familia|residente y la familia"},
+  {id:"r_relevo",q:"¿Se transmite la información al turno siguiente?",ej:"Incidencias de cada residente en el relevo.",paso:"Transmitir las incidencias al turno siguiente",fase:"fin",kw:"relevo|turno entrante|transmitir"}],
+ auto:[
+  {id:"u_par",q:"¿Hay aprietes a par u operaciones críticas que registrar?",ej:"Uniones de seguridad con registro de par y ángulo.",paso:"Apretar a par y registrar los aprietes",fase:"ejec",kw:"a par|apriet"},
+  {id:"u_poka",q:"¿Se verifican los poka-yokes al arrancar?",ej:"Comprobar que los sistemas antierror detectan una pieza patrón mala.",paso:"Verificar los poka-yokes",fase:"ctrl",kw:"poka"},
+  {id:"u_traz",q:"¿Se registra la trazabilidad del conjunto?",ej:"Número de serie, etiqueta o lote de los componentes críticos.",paso:"Registrar la trazabilidad del conjunto",fase:"fin",kw:"trazab|numero de serie"},
+  {id:"u_rep",q:"¿Hay un circuito para reparar los rechazos?",ej:"Puesto de reparación y vuelta a la línea con nueva prueba.",paso:"Reparar o retrabajar los rechazos",fase:"ctrl",kw:"repar|retrabaj"}]
+};
+var QIDS={}; CHK_G.forEach(function(q){QIDS[q.id]=q;}); Object.keys(CHK_S).forEach(function(s){CHK_S[s].forEach(function(q){QIDS[q.id]=q;});});
+
+
+/* ================= Ejemplos ficticios ================= */
+/* [nombre, frecuencia, unidad, minutos, personas, riesgo, espera, unidad espera, tipo, desperdicios] */
+var EJ={
+ "Compras":["Aprobación de un pedido de compra",[
+  ["Recibir la solicitud de material por correo",3,"d",5,1,2,4,"h","nva",{T:2,I:2,M:1,D:1,E:1}],
+  ["Pedir tres presupuestos (también en compras pequeñas)",3,"d",20,1,1,0,"h","nn",{P:3,M:1,S:2}],
+  ["Esperar los presupuestos",3,"d",5,1,1,2,"d","nva",{E:3,I:1}],
+  ["Comparar las ofertas en una hoja de cálculo",3,"d",25,1,3,0,"h","va",{M:2,P:1,D:2,S:1}],
+  ["Esperar la aprobación del responsable",3,"d",5,1,1,1,"d","nn",{E:3,I:2,P:2}],
+  ["Pasar los datos al ERP a mano",3,"d",15,1,3,0,"h","nva",{T:3,P:2,D:3,S:2}],
+  ["Enviar el pedido al proveedor",3,"d",5,1,2,0,"h","va",{T:1}],
+  ["Reclamar la confirmación de la fecha de entrega",2,"d",10,1,2,1,"d","nva",{E:2,D:2,M:1}]]],
+ "Producción":["Cambio de formato en la línea de envasado",[
+  ["Esperar el material del siguiente lote (operarios parados)",2,"d",20,2,1,0,"h","nva",{E:2}],
+  ["Buscar herramientas y piezas de formato",2,"d",15,1,1,0,"h","nva",{M:3}],
+  ["Desmontar y montar el formato",2,"d",40,2,2,0,"h","nn",{M:2,P:1,S:1}],
+  ["Ajustar y hacer piezas de prueba",2,"d",25,2,3,0,"h","nva",{D:3,O:1}],
+  ["Esperar la validación de calidad (línea parada)",2,"d",15,2,1,0,"h","nva",{E:2}],
+  ["Producir el lote",2,"d",240,2,1,0,"h","va",{I:1}],
+  ["Llevar los palés al almacén",2,"d",20,1,1,0,"h","nva",{T:2}]]],
+ "Logística":["Preparación y expedición de pedidos",[
+  ["Imprimir el listado de pedidos",5,"d",10,1,1,0,"h","nva",{T:1,P:1}],
+  ["Hacer el picking en el almacén",5,"d",90,3,2,0,"h","nn",{M:2,D:2}],
+  ["Verificar cada pedido al 100 %",5,"d",30,1,1,0,"h","nva",{P:3}],
+  ["Embalar y etiquetar",5,"d",45,2,2,0,"h","va",{D:1,M:1}],
+  ["Esperar al transportista en el muelle",1,"d",30,2,1,2,"h","nva",{E:2,I:2}],
+  ["Cargar el camión",1,"d",40,2,1,0,"h","nn",{T:1}],
+  ["Enviar albaranes y confirmar la salida",1,"d",15,1,2,0,"h","nva",{T:2,D:1}]]],
+ "Planificación":["Planificación semanal de entregas a clientes",[
+  ["Descargar pedidos y previsiones del ERP a una hoja de cálculo",1,"s",45,1,3,0,"h","nva",{T:3,D:2,S:2}],
+  ["Cruzar pedidos con stock y capacidad",1,"s",120,1,3,0,"h","va",{M:2,P:2}],
+  ["Esperar la confirmación de fechas de proveedores",1,"s",30,1,1,3,"d","nva",{E:3}],
+  ["Rehacer el plan por pedidos urgentes",1,"d",40,1,3,0,"h","nva",{P:3,D:2,O:1}],
+  ["Comunicar las fechas a comercial y a los clientes",1,"s",60,1,2,0,"h","nn",{T:2,P:1}],
+  ["Reclamar y reprogramar entregas retrasadas",1,"d",20,1,3,0,"h","nva",{D:3,E:2}]]],
+ "Mantenimiento":["Reparación de una avería en máquina",[
+  ["Recibir el aviso de avería por teléfono",3,"s",5,1,2,0.5,"h","nva",{T:2,D:1,E:1}],
+  ["Desplazarse a la máquina y diagnosticar",3,"s",30,1,2,0,"h","nn",{M:2,S:1}],
+  ["Buscar el repuesto en el almacén",3,"s",25,1,2,0,"h","nva",{M:3,T:2,I:1}],
+  ["Esperar el repuesto del proveedor",1,"s",15,1,1,2,"d","nva",{E:3}],
+  ["Reparar y probar la máquina",3,"s",60,2,3,0,"h","va",{D:1}],
+  ["Rellenar el parte de trabajo",3,"s",15,1,1,0,"h","nn",{P:2,T:1}]]],
+ "Calidad":["Liberación de un lote de producto",[
+  ["Tomar muestras y llevarlas al laboratorio",2,"d",15,1,1,0,"h","nva",{T:2,M:1}],
+  ["Esperar el turno de análisis",2,"d",0,1,1,4,"h","nva",{E:2,I:2}],
+  ["Analizar las muestras",2,"d",30,1,3,0,"h","va",{P:1}],
+  ["Registrar los resultados en papel y en el sistema",2,"d",10,1,2,0,"h","nva",{P:3,D:2}],
+  ["Esperar la firma del responsable",2,"d",5,1,1,3,"h","nva",{E:2}],
+  ["Liberar el lote en el sistema",2,"d",5,1,2,0,"h","nn",{T:1}]]]
+};
+
+/* ================= Estado ================= */
+function nuevoEstado(){return {proceso:"",area:"Producción",sector:"",plantilla:"",inicio:"",fin:"",semanas:46,dias:5,coste:0,pasos:[],abierto:null,chk:{},etapa:1,view:"proceso"};}
+function has(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
+var seq=0;
+function nuevoId(){seq++;return Date.now().toString(36)+seq.toString(36)+Math.random().toString(36).slice(2,5);}
+function nuevoPaso(nombre){var w={};WK.forEach(function(k){w[k]=0;});return {id:nuevoId(),nombre:nombre,fv:1,fu:"d",min:15,personas:1,espera:0,eu:"h",riesgo:1,tipo:null,w:w,fase:"",def:true};}
+function num(x,min,max){var n=parseFloat(String(x).replace(",","."));if(!isFinite(n))n=0;if(min!=null&&n<min)n=min;if(max!=null&&n>max)n=max;return n;}
+function txt(x){return (typeof x==="string"||typeof x==="number")?String(x):"";}
+function sanear(o){
+  if(!o||typeof o!=="object"||!Array.isArray(o.pasos)) return null;
+  var s=nuevoEstado();
+  s.proceso=txt(o.proceso).slice(0,80);
+  var ar=AREA_OLD[o.area]||o.area; s.area=AREAS.indexOf(ar)>=0?ar:"Otro";
+  s.semanas=(o.semanas==null||o.semanas==="")?46:Math.round(num(o.semanas,1,52));
+  s.dias=(o.dias==null||o.dias==="")?5:Math.round(num(o.dias,1,7));
+  s.coste=num(o.coste,0,10000);
+  s.view=o.view==="result"?"result":"proceso";
+  s.sector=(typeof o.sector==="string"&&has(SECBY,o.sector))?o.sector:"";
+  s.plantilla=(typeof o.plantilla==="string"&&has(TPLBY,o.plantilla))?o.plantilla:"";
+  s.inicio=txt(o.inicio).slice(0,120); s.fin=txt(o.fin).slice(0,120);
+  if(o.chk&&typeof o.chk==="object")Object.keys(o.chk).forEach(function(k){if(has(QIDS,k)&&["ok","na","add"].indexOf(o.chk[k])>=0)s.chk[k]=o.chk[k];});
+  var ids={};
+  s.pasos=o.pasos.slice(0,MAXP).map(function(p){
+    p=(p&&typeof p==="object")?p:{};
+    var q=nuevoPaso(txt(p.nombre).slice(0,80));
+    var pid=typeof p.id==="string"?p.id.slice(0,24):"";if(pid&&!ids[pid])q.id=pid; ids[q.id]=1;
+    if(p.fv!=null||p.fu!=null){q.fv=num(p.fv,0,10000);q.fu=["d","s","m"].indexOf(p.fu)>=0?p.fu:"s";}
+    else {q.fv=num(p.frec,0,10000);q.fu="s";} /* versiones anteriores: veces por semana */
+    q.min=num(p.min,0,10000);
+    q.personas=(p.personas==null||p.personas==="")?1:num(p.personas,0,999);
+    q.espera=num(p.espera,0,100000); q.eu=p.eu==="d"?"d":"h";
+    q.riesgo=[1,2,3].indexOf(+p.riesgo)>=0?+p.riesgo:1;
+    if(["va","nn","nva"].indexOf(p.tipo)>=0)q.tipo=p.tipo;
+    else if(Array.isArray(p.v)){var v=p.v;if(v[0]===true&&v[1]===true)q.tipo="va";else if(v[2]===true)q.tipo="nn";else if(v.some(function(x){return x===true||x===false;}))q.tipo="nva";}
+    WK.forEach(function(k){var x=p.w?p.w[k]:0;q.w[k]=([1,2,3].indexOf(x)>=0)?x:0;});
+    q.fase=(typeof p.fase==="string"&&has(FRANK,p.fase))?p.fase:""; q.def=p.def===true;
+    return q;
+  });
+  s.abierto=(typeof o.abierto==="string"&&s.pasos.some(function(p){return p.id===o.abierto;}))?o.abierto:null;
+  s.etapa=[1,2,3,4].indexOf(+o.etapa)>=0?+o.etapa:(s.pasos.length?4:1);
+  return s;
+}
+function cargar(){
+  try{
+    var t=localStorage.getItem(KEY); if(t) return sanear(JSON.parse(t));
+    for(var i=0;i<KEYS_OLD.length;i++){var old=localStorage.getItem(KEYS_OLD[i]);if(old){var s=sanear(JSON.parse(old));if(s){s.view="proceso";return s;}}}
+  }catch(e){}
+  return null;
+}
+var avisado=false;
+function avisoAlmacen(){if(avisado)return;avisado=true;var el=document.getElementById("privacy");if(el){el.textContent="⚠️ No se pueden guardar los datos en este navegador (almacenamiento bloqueado o lleno): se perderán al cerrar la página. Usa «Exportar (.json)» para conservarlos.";el.style.color="#7a5200";el.setAttribute("role","status");}var m=document.querySelector("main");if(m&&!document.getElementById("aviso-alm")){var w=document.createElement("div");w.className="warn";w.id="aviso-alm";w.setAttribute("role","alert");w.textContent="⚠️ No se pueden guardar los datos en este navegador: se perderán al cerrar la página. Usa «Exportar (.json)» en «Definir» para conservarlos.";m.insertBefore(w,m.firstChild);}}
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){avisoAlmacen();}}
+var S=cargar()||nuevoEstado();
+
+function ejemplo(area){
+  var e=EJ[area], s=nuevoEstado();
+  s.proceso=e[0]; s.area=area;
+  s.pasos=e[1].map(function(r,i){
+    var p=nuevoPaso(r[0]); p.id="ej"+i; p.fv=r[1]; p.fu=r[2]; p.min=r[3]; p.personas=r[4]; p.riesgo=r[5];
+    p.eu=r[7]; p.espera=r[6]*(r[7]==="d"?24:1); p.tipo=r[8]; p.def=false; WK.forEach(function(k){p.w[k]=r[9][k]||0;}); return p;
+  });
+  s.etapa=4; s.view="result"; return s;
+}
+
+/* ================= Cálculos ================= */
+function clase(p){return p.tipo||"nva";}
+function frecSem(p){return p.fv*(p.fu==="d"?S.dias:(p.fu==="m"?12/52:1));}
+function horasAnio(p){return frecSem(p)*p.min/60*p.personas*S.semanas;}
+function detectados(p){return WK.filter(function(k){return p.w[k]>0;});}
+function pctRecup(p){
+  var s=0; WK.forEach(function(k){s+=(p.w[k]||0)*0.10*WBY[k].peso;});
+  var c=clase(p); s=Math.min(s,TOPE[c]); if(c==="nva")s=Math.max(s,0.5); return s;
+}
+function horasRecup(p){return horasAnio(p)*pctRecup(p);}
+function puntuacion(p){return horasRecup(p)*p.riesgo;}
+function esperaReducible(p){return p.espera*[0,0.25,0.5,0.75][p.w.E||0];}
+function principal(p){var best=null,bv=0;WK.forEach(function(k){var v=(p.w[k]||0)*WBY[k].peso;if(v>bv){bv=v;best=k;}});return best;}
+function cm(k){return (CM[S.area]&&CM[S.area][k])||WBY[k].cm;}
+function analisis(){
+  var P=S.pasos,r={n:P.length};
+  r.va=P.filter(function(p){return clase(p)==="va";}).length;
+  r.nn=P.filter(function(p){return clase(p)==="nn";}).length;
+  r.nva=r.n-r.va-r.nn;
+  var hTot=0,hVA=0,esp=0,espRed=0,h=0,hr=0,inst=0,cnt={},ints={};
+  WK.forEach(function(k){cnt[k]=0;ints[k]=0;});
+  P.forEach(function(p){
+    var ha=horasAnio(p); hTot+=ha; if(clase(p)==="va")hVA+=ha;
+    esp+=p.espera; espRed+=esperaReducible(p); h+=ha; hr+=horasRecup(p);
+    detectados(p).forEach(function(k){cnt[k]++;ints[k]+=p.w[k];inst++;});
+  });
+  r.pctVA=r.n?r.va/r.n*100:0; r.pctTiempoVA=hTot?hVA/hTot*100:0;
+  r.h=h; r.hr=hr; r.inst=inst; r.cnt=cnt; r.pctRec=h?hr/h*100:0;
+  r.jornadas=hr/8; r.fte=hr/(S.semanas*40); r.euros=S.coste>0?hr*S.coste:0;
+  var cT=P.reduce(function(a,p){return a+p.min;},0)/60;
+  var cVA=P.filter(function(p){return clase(p)==="va";}).reduce(function(a,p){return a+p.min;},0)/60;
+  r.ciclo=cT+esp; r.cicloTrabajo=cT; r.esp=esp; r.espRed=espRed; r.cicloMejor=r.ciclo-espRed;
+  r.pctPlazo=r.ciclo>0?espRed/r.ciclo*100:0;
+  r.pce=r.ciclo>0?cVA/r.ciclo*100:0;
+  var top=null; WK.forEach(function(k){if(cnt[k]>0&&(top===null||cnt[k]>cnt[top]||(cnt[k]===cnt[top]&&ints[k]>ints[top])))top=k;});
+  r.topW=top;
+  r.prios=P.map(function(p,i){return {p:p,pr:puntuacion(p),hr:horasRecup(p),idx:i};})
+    .filter(function(o){return o.hr>0&&(detectados(o.p).length>0||clase(o.p)==="nva");})
+    .sort(function(a,b){return b.pr-a.pr||b.hr-a.hr||a.idx-b.idx;}).slice(0,3);
+  r.plazos=P.map(function(p,i){return {p:p,red:esperaReducible(p),idx:i};}).filter(function(o){return o.red>0;})
+    .sort(function(a,b){return b.red-a.red||a.idx-b.idx;}).slice(0,3);
+  r.pendientes=P.filter(function(p){return !p.tipo;});
+  return r;
+}
+
+/* ================= Utilidades ================= */
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function miles(t){var pr=t.split(",");pr[0]=pr[0].replace(/\./g,"").replace(/\B(?=(\d{3})+(?!\d))/g,".");return pr.join(",");}
+function fmt(n,d){d=d||0;return miles(Number(n).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d}));}
+function fmtN(n){return miles(Number(n).toLocaleString("es-ES",{maximumFractionDigits:2}));}
+function eur(n){return fmt(n)+" €";}
+function fmtH(n){if(n>0&&n<10){var t=f1(n);return t==="0"?"menos de 0,1":t;}return fmt(n);}
+function f1(n){return miles(Number(n).toLocaleString("es-ES",{maximumFractionDigits:1}));}
+function dur(h,ref){if((ref!=null?Math.max(h,ref):h)>=24){var d=f1(h/24);return d+(d==="1"?" día":" días");}return f1(h)+" h";}
+function personasTxt(f){return f>=1?"el trabajo de "+fmt(f,1)+" personas a jornada completa":"el "+fmt(f*100)+" % de una persona a jornada completa";}
+function campo(n){return String(Math.round(n*100)/100).replace(".",",");}
+function plural(n,a,b){return fmtN(n)+" "+(n===1?a:b);}
+function nom(p){var i=S.pasos.indexOf(p);return (p.nombre||"").trim()||("Paso "+(i+1));}
+function nomProceso(){return (S.proceso||"").trim()||"Proceso sin nombre";}
+function slug(s){return (s||"proceso").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"proceso";}
+function $(id){return document.getElementById(id);}
+function porId(id){for(var i=0;i<S.pasos.length;i++)if(S.pasos[i].id===id)return S.pasos[i];return null;}
+function frecTxt(p){return fmtN(p.fv)+" "+(p.fu==="d"?"al día":p.fu==="m"?"al mes":"a la semana");}
+function esperaDisp(p){return p.espera/(p.eu==="d"?24:1);}
+function armar(btn,label,fn){
+  if(typeof label==="function"){fn=label;label="Pulsa otra vez para confirmar";}
+  if(btn.dataset.armed){delete btn.dataset.armed;btn.classList.remove("armed");btn.textContent=btn.dataset.txt;fn();return;}
+  btn.dataset.txt=btn.textContent;btn.dataset.armed="1";btn.classList.add("armed");btn.textContent=label;
+  setTimeout(function(){if(btn.dataset.armed){delete btn.dataset.armed;btn.classList.remove("armed");btn.textContent=btn.dataset.txt;}},3500);
+}
+
+/* ================= Navegación ================= */
+function ir(v){
+  S.view=(v==="result")?"result":"proceso"; guardar();
+  $("v-proceso").classList.toggle("hidden",S.view!=="proceso");
+  $("v-result").classList.toggle("hidden",S.view!=="result");
+  if(S.view==="proceso"){[1,2,3,4].forEach(function(n){$("e"+n).classList.toggle("hidden",S.etapa!==n);});pintarNav();pintarCabecera();pintarPasos();pintarChecks();} else pintarResult();
+  pintarBarra(); window.scrollTo(0,0);
+}
+function irEtapa(n){S.etapa=[1,2,3,4].indexOf(n)>=0?n:1;ir("proceso");}
+document.addEventListener("click",function(e){var g=e.target.closest("[data-go]");if(g){ir(g.dataset.go);return;}var t=e.target.closest("[data-etapa]");if(t)irEtapa(+t.dataset.etapa);});
+var ETAPAS=["Definir","Pasos","¿Falta algo?","Diagnóstico"];
+function etapaOk(n){
+  if(n===1)return !!(S.proceso.trim()&&(S.plantilla||S.pasos.length));
+  if(n===2)return S.pasos.length>0;
+  if(n===3)return S.pasos.length>0&&cobertura().pendientes===0;
+  return S.pasos.length>0&&S.pasos.every(function(p){return p.tipo;});
+}
+function pintarNav(){
+  $("etapas").innerHTML=ETAPAS.map(function(t,i){var n=i+1,on=S.view==="proceso"&&S.etapa===n,ok=etapaOk(n);
+    return '<button data-etapa="'+n+'" class="'+(on?"on ":"")+(ok?"ok":"")+'"'+(on?' aria-current="step"':'')+'><span class="en">'+(ok&&!on?"✓":n)+'</span>'+t+'</button>';}).join("")+
+    '<button data-go="result"><span class="en">5</span>Resultados</button>';
+}
+$("b-ver").addEventListener("click",function(){ir("result");});
+
+/* ================= Cabecera ================= */
+function pintarCabecera(){
+  $("f-proceso").value=S.proceso; $("f-semanas").value=S.semanas; $("f-dias").value=S.dias; $("f-coste").value=S.coste?campo(S.coste):"";
+  $("areas").innerHTML=AREAS.map(function(a){return '<button class="chip'+(S.area===a?" on":"")+'" data-area="'+a+'" aria-pressed="'+(S.area===a)+'">'+a+'</button>';}).join("");
+  $("ejemplos").innerHTML=Object.keys(EJ).map(function(a){return '<button class="chip" data-ej="'+a+'">▶ '+a+'</button>';}).join("");
+  $("f-inicio").value=S.inicio; $("f-fin").value=S.fin;
+  $("sectores").innerHTML=SECTORES.map(function(x){var on=S.sector===x.k;return '<button class="chip'+(on?" on":"")+'" data-sec="'+x.k+'" aria-pressed="'+on+'">'+x.ic+' '+x.n+'</button>';}).join("");
+  var h="";
+  if(!S.sector)h+='<div class="tplh">Elige un sector para ver sus procesos tipo</div>';
+  else if(TPL[S.sector])h+='<div class="tplh">'+SECBY[S.sector].n+'</div>'+TPL[S.sector].map(botonTpl).join("");
+  h+='<div class="tplh">Comunes a cualquier actividad</div>'+TPL.comun.map(botonTpl).join("")+
+     '<button class="tpl blank" data-tpl=""><b>Otro proceso: lo describo yo</b><span>Sigues con tus pasos actuales o con la lista vacía</span></button>';
+  $("plantillas").innerHTML=h;
+}
+function botonTpl(t){var on=S.plantilla===t.id;return '<button class="tpl'+(on?" on":"")+'" data-tpl="'+t.id+'" aria-pressed="'+on+'"><b>'+esc(t.n)+'</b><span>'+t.p.length+' pasos · '+t.area+'</span></button>';}
+function cargarPlantilla(t){
+  var prev=S.plantilla&&has(TPLBY,S.plantilla)?TPLBY[S.plantilla]:null;
+  function poner(campoS,valor,anterior){if(!String(S[campoS]).trim()||(prev&&S[campoS]===anterior))S[campoS]=valor;}
+  poner("proceso",t.n,prev&&prev.n); poner("inicio",t.ini,prev&&prev.ini); poner("fin",t.fin,prev&&prev.fin);
+  S.pasos=t.p.map(function(r){var p=nuevoPaso(r[0]);p.fase=r[1];return p;});
+  S.plantilla=t.id; S.area=t.area; S.chk={}; S.abierto=null;
+}
+$("sectores").addEventListener("click",function(e){var b=e.target.closest("[data-sec]");if(!b)return;S.sector=b.dataset.sec;guardar();pintarCabecera();pintarChecks();pintarNav();});
+$("plantillas").addEventListener("click",function(e){
+  var b=e.target.closest("[data-tpl]");if(!b)return;var id=b.dataset.tpl;
+  if(id===""){irEtapa(2);return;}
+  if(!has(TPLBY,id))return;var t=TPLBY[id];
+  var go=function(){cargarPlantilla(t);guardar();irEtapa(2);};
+  if(!S.pasos.length||b.dataset.armed){go();return;}
+  Array.prototype.forEach.call($("plantillas").querySelectorAll(".tpl.armed"),function(o){if(o!==b&&has(TPLBY,o.dataset.tpl))o.outerHTML=botonTpl(TPLBY[o.dataset.tpl]);});
+  var tok=String(Date.now())+Math.random();b.dataset.armed=tok;b.classList.add("armed");b.innerHTML='<b>¿Sustituir tus '+plural(S.pasos.length,"paso","pasos")+'?</b><span>Pulsa otra vez para cargar «'+esc(t.n)+'»</span>';
+  setTimeout(function(){if(b.isConnected&&b.dataset.armed===tok)pintarCabecera();},3500);
+});
+$("f-inicio").addEventListener("input",function(){S.inicio=this.value.slice(0,120);guardar();});
+$("f-fin").addEventListener("input",function(){S.fin=this.value.slice(0,120);guardar();pintarNav();});
+$("areas").addEventListener("click",function(e){var b=e.target.closest("[data-area]");if(!b)return;S.area=b.dataset.area;guardar();pintarCabecera();});
+$("ejemplos").addEventListener("click",function(e){
+  var b=e.target.closest("[data-ej]");if(!b)return; var a=b.dataset.ej;
+  var go=function(){S=ejemplo(a);guardar();ir("result");};
+  if(S.pasos.length)armar(b,"¿Sustituir tus datos?",go);else go();
+});
+$("f-proceso").addEventListener("input",function(){S.proceso=this.value.slice(0,80);guardar();pintarNav();});
+function opcion(id,campoS,min,max,def,entero){
+  $(id).addEventListener("change",function(){var v=String(this.value).trim();var n=v===""?def:num(v,min,max);if(entero)n=Math.round(n);S[campoS]=n;this.value=(campoS==="coste"&&!n)?"":campo(n);guardar();pintarPasos();pintarBarra();});
+}
+opcion("f-semanas","semanas",1,52,46,true); opcion("f-dias","dias",1,7,5,true); opcion("f-coste","coste",0,10000,0,false);
+$("b-borrar").addEventListener("click",function(){
+  armar(this,function(){try{localStorage.removeItem(KEY);KEYS_OLD.forEach(function(k){localStorage.removeItem(k);});}catch(e){}S=nuevoEstado();ir("proceso");$("import-msg").textContent="Datos borrados.";});
+});
+$("b-export").addEventListener("click",function(){
+  var blob=new Blob([JSON.stringify({app:"detector-desperdicios-lean",version:4,proceso:S.proceso,area:S.area,sector:S.sector,plantilla:S.plantilla,inicio:S.inicio,fin:S.fin,semanas:S.semanas,dias:S.dias,coste:S.coste,chk:S.chk,pasos:S.pasos},null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="desperdicios-"+slug(S.proceso)+".json";
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},4000);
+});
+$("b-import").addEventListener("click",function(){$("f-import").click();});
+$("f-import").addEventListener("change",function(){
+  var f=this.files&&this.files[0];if(!f)return;var inp=this,rd=new FileReader();
+  rd.onload=function(){
+    var s=null;try{s=sanear(JSON.parse(rd.result));}catch(e){}
+    if(!s)$("import-msg").textContent="El archivo no es un análisis válido.";
+    else{s.view="proceso";s.etapa=1;S=s;guardar();ir("proceso");$("import-msg").textContent="Análisis importado: "+plural(S.pasos.length,"paso","pasos")+".";}
+    inp.value="";
+  };
+  rd.onerror=function(){$("import-msg").textContent="No se ha podido leer el archivo.";inp.value="";};
+  rd.readAsText(f);
+});
+
+/* ================= Añadir pasos ================= */
+$("b-add").addEventListener("click",function(){
+  var lineas=$("f-nuevos").value.split(/\r?\n/).map(function(l){return l.replace(/^\s*(\d+[\.\)](?!\d)|[-•*·])\s*/,"").trim();}).filter(Boolean);
+  if(!lineas.length){$("f-nuevos").focus();$("add-msg").textContent="Escribe al menos un paso.";return;}
+  var hueco=MAXP-S.pasos.length,nuevos=lineas.slice(0,hueco),primero=null;
+  nuevos.forEach(function(l){var p=nuevoPaso(l.slice(0,80));S.pasos.push(p);if(!primero)primero=p;});
+  $("add-msg").textContent=lineas.length>hueco?"Solo se admiten "+MAXP+" pasos: se han añadido "+nuevos.length+".":(nuevos.length===1?"Paso añadido.":nuevos.length+" pasos añadidos.")+" Revisa el orden y sigue con «¿Falta algún paso?».";
+  $("f-nuevos").value="";
+  var pend=S.pasos.filter(function(p){return !p.tipo;})[0];
+  if(!S.abierto&&(pend||primero))S.abierto=(pend||primero).id;
+  guardar();pintarPasos();pintarBarra();
+});
+
+/* ================= Lista de pasos ================= */
+function metaTxt(p){
+  return frecTxt(p)+" · "+fmtN(p.min)+" min"+(p.personas!==1?" · "+fmtN(p.personas)+" personas":"")+" · "+fmt(horasAnio(p))+" h/año"+(p.espera?" · espera "+fmtN(esperaDisp(p))+" "+(p.eu==="d"?"días":"h"):"");
+}
+function badgeHtml(p){return p.tipo?'<span class="badge '+CLASE[p.tipo].b+'">'+CLASE[p.tipo].n+'</span>':'<span class="badge b-pend">Sin clasificar</span>';}
+function cabeceraPaso(p,i){
+  return '<button class="sh" data-a="toggle" aria-expanded="'+(S.abierto===p.id)+'"><span class="num">'+(i+1)+'</span><span class="mid">'+
+    '<span class="sname">'+esc(nom(p))+'</span><span class="smeta">'+metaTxt(p)+'</span>'+
+    '<span class="sbadge">'+badgeHtml(p)+(p.def?'<span class="badge b-def">Tiempos por defecto</span>':'')+'<span class="sicons">'+detectados(p).map(function(k){return '<span title="'+WBY[k].n+'">'+WBY[k].ic+'</span>';}).join("")+'</span></span>'+
+    '</span><span class="chev">▾</span></button>';
+}
+function seg(a,lista,val){return '<div class="seg">'+lista.map(function(u){return '<button class="'+(val===u.k?"on":"")+'" data-a="'+a+'" data-v="'+u.k+'" aria-pressed="'+(val===u.k)+'">'+u.n+'</button>';}).join("")+'</div>';}
+function cuerpoPaso(p,i){
+  var h='<div class="sb">';
+  h+='<div class="namerow"><input type="text" data-f="nombre" maxlength="80" value="'+esc(p.nombre)+'" aria-label="Nombre del paso" placeholder="Paso '+(i+1)+'">'+
+     '<button class="iconbtn" data-a="up" '+(i===0?"disabled":"")+' aria-label="Subir">↑</button>'+
+     '<button class="iconbtn" data-a="down" '+(i===S.pasos.length-1?"disabled":"")+' aria-label="Bajar">↓</button>'+
+     '<button class="iconbtn" data-a="del" aria-label="Borrar paso">✕</button></div>';
+  h+='<div class="lbl">¿Este paso aporta valor?</div><div class="tipos">'+TIPOS.map(function(t){return '<button class="tipo '+t.k+(p.tipo===t.k?" on":"")+'" data-a="tipo" data-t="'+t.k+'" aria-pressed="'+(p.tipo===t.k)+'"><span class="ic">'+t.ic+'</span>'+t.n+'</button>';}).join("")+'</div>'+
+     '<div class="hint">Aporta valor: el cliente lo pagaría porque transforma el producto, la información o una decisión. Obligatorio: no aporta, pero lo exige la ley, una auditoría, la seguridad o una norma.</div>';
+  h+='<div class="lbl">¿Qué desperdicios ves? Toca los que haya</div><div class="tiles">'+W.map(function(w){return '<button class="tile'+(p.w[w.k]>0?" on":"")+'" data-a="w" data-k="'+w.k+'" aria-pressed="'+(p.w[w.k]>0)+'"><span class="ic">'+w.ic+'</span><span class="tl">'+w.tl+'</span><span class="tn">'+w.n+'</span></button>';}).join("")+'</div>';
+  var act=detectados(p);
+  if(act.length)h+='<div class="lvls">'+act.map(function(k){var w=WBY[k];return '<div class="lvlrow"><span class="ln">'+w.ic+' '+w.n+': ¿cuánto?</span><span class="lb">'+w.esc.map(function(e,j){return '<button class="'+(p.w[k]===j+1?"on":"")+'" aria-pressed="'+(p.w[k]===j+1)+'" data-a="lvl" data-k="'+k+'" data-l="'+(j+1)+'">'+e+'</button>';}).join("")+'</span></div>';}).join("")+'</div>';
+  h+='<details class="help"><summary>¿Qué significa cada desperdicio?</summary><ul>'+W.map(function(w){return '<li><b>'+w.ic+' '+w.n+':</b> '+w.ej+'</li>';}).join("")+'</ul></details>';
+  h+='<div class="nums">';
+  h+='<div><div class="lbl">¿Cada cuánto se hace?</div><div class="numin wrap"><input type="text" inputmode="decimal" maxlength="8" autocomplete="off" data-f="fv" value="'+campo(p.fv)+'" aria-label="Veces"><span>veces</span>'+seg("fu",FUS,p.fu)+'</div></div>';
+  h+='<div><div class="lbl">Minutos de trabajo cada vez</div><div class="chips" data-g="min">'+MINS.map(function(m){return '<button class="chip'+(p.min===m?" on":"")+'" aria-pressed="'+(p.min===m)+'" data-a="min" data-v="'+m+'">'+m+' min</button>';}).join("")+'</div>'+
+     '<div class="numin"><input type="text" inputmode="decimal" maxlength="8" autocomplete="off" data-f="min" value="'+campo(p.min)+'" aria-label="Minutos de trabajo"><span>minutos</span></div>'+
+     '<div class="hint">Incluye el tiempo en que las personas se quedan paradas esperando.</div></div>';
+  h+='<div><div class="lbl">Personas que intervienen</div><div class="chips" data-g="personas">'+PERS.map(function(n){return '<button class="chip'+(p.personas===n?" on":"")+'" aria-pressed="'+(p.personas===n)+'" data-a="personas" data-v="'+n+'">'+n+'</button>';}).join("")+'</div>'+
+     '<div class="numin"><input type="text" inputmode="decimal" maxlength="5" autocomplete="off" data-f="personas" value="'+campo(p.personas)+'" aria-label="Personas"><span>personas</span></div></div>';
+  h+='<div><div class="lbl">Riesgo de error</div><div class="chips">'+RIESGO.map(function(r,j){return '<button class="chip'+(p.riesgo===j+1?" on":"")+'" aria-pressed="'+(p.riesgo===j+1)+'" data-a="riesgo" data-v="'+(j+1)+'">'+r+'</button>';}).join("")+'</div></div>';
+  h+='<div><div class="lbl">Tiempo que el trabajo queda parado (opcional)</div><div class="numin wrap"><input type="text" inputmode="decimal" maxlength="8" autocomplete="off" data-f="espera" value="'+campo(esperaDisp(p))+'" aria-label="Espera">'+seg("eu",EUS,p.eu)+'</div>'+
+     '<div class="hint">Por ejemplo, esperando una aprobación, un repuesto o un camión. Alarga el plazo, aunque nadie esté parado.</div></div>';
+  h+='</div>';
+  var ult=i===S.pasos.length-1;
+  h+='<div class="actions">'+(ult?'<button class="btn teal" data-go="result">Ver resultados →</button>':'<button class="btn" data-a="next">Siguiente paso →</button>')+'</div>';
+  return h+'</div>';
+}
+function pintarPasos(){
+  var h="";
+  if(!S.pasos.length)h='<div class="empty">Todavía no hay pasos.<div class="actions" style="justify-content:center"><button class="btn sec" data-etapa="1">Elegir un proceso tipo</button><button class="btn sec" data-etapa="2">Escribir los pasos</button></div></div>';
+  S.pasos.forEach(function(p,i){var open=S.abierto===p.id;h+='<div class="step '+(p.tipo||"")+(open?" open":"")+'" data-id="'+esc(p.id)+'">'+cabeceraPaso(p,i)+(open?cuerpoPaso(p,i):"")+'</div>';});
+  $("lista").innerHTML=h;
+  pintarLista2();
+  var lleno=S.pasos.length>=MAXP;
+  $("b-add").disabled=lleno;$("f-nuevos").disabled=lleno;$("f-nuevos").rows=S.pasos.length?2:4;
+  $("lbl-nuevos").textContent=lleno?"Has llegado al máximo de "+MAXP+" pasos":(S.pasos.length?"Añadir más pasos (uno por línea)":"Añade los pasos, uno por línea");
+}
+function repintarConFoco(){
+  var a=document.activeElement,ds=a&&a.dataset?a.dataset:{},card=a&&a.closest?a.closest(".step"):null,id=card?card.dataset.id:null;
+  var sel=ds.f?'[data-f="'+ds.f+'"]':(ds.a&&ds.v!=null?'[data-a="'+ds.a+'"][data-v="'+ds.v+'"]':null);
+  var y=window.scrollY; pintarPasos(); window.scrollTo(0,y);
+  if(sel&&id){var c=$("lista").querySelector('[data-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');var el=c&&c.querySelector(sel);if(el)el.focus({preventScroll:true});}
+}
+function refrescarCabecera(card,p){var sh=card.querySelector(".sh");sh.querySelector(".sname").textContent=nom(p);sh.querySelector(".smeta").textContent=metaTxt(p);var d=sh.querySelector(".b-def");if(d&&!p.def)d.remove();}
+function marcarChips(card,g,val){var c=card.querySelector('[data-g="'+g+'"]');if(!c)return;Array.prototype.forEach.call(c.querySelectorAll(".chip"),function(b){b.classList.toggle("on",+b.dataset.v===val);b.setAttribute("aria-pressed",String(+b.dataset.v===val));});}
+$("lista").addEventListener("input",function(e){
+  var el=e.target,card=el.closest(".step");if(!card||!el.dataset.f)return;
+  var p=porId(card.dataset.id);if(!p)return;var f=el.dataset.f;
+  if(f==="nombre")p.nombre=el.value.slice(0,80);
+  else if(f==="espera")p.espera=num(el.value,0,100000/(p.eu==="d"?24:1))*(p.eu==="d"?24:1);
+  else{p[f]=num(el.value,0,f==="personas"?999:10000);if(f==="min"||f==="personas")marcarChips(card,f,p[f]);}
+  if(f!=="nombre")p.def=false;
+  guardar();refrescarCabecera(card,p);pintarBarra();
+});
+$("lista").addEventListener("change",function(e){
+  var el=e.target,card=el.closest(".step");if(!card||!el.dataset.f||el.dataset.f==="nombre")return;
+  var p=porId(card.dataset.id);if(!p)return;
+  el.value=campo(el.dataset.f==="espera"?esperaDisp(p):p[el.dataset.f]);
+  if(el.dataset.f==="espera"&&p.espera>0&&!(p.w.E>0)){p.w.E=2;guardar();setTimeout(repintarConFoco,0);pintarBarra();}
+});
+$("lista").addEventListener("click",function(e){
+  var b=e.target.closest("button[data-a]");if(!b)return;
+  var card=b.closest(".step"),p=porId(card.dataset.id);if(!p)return;
+  var i=S.pasos.indexOf(p),a=b.dataset.a,foco=null;
+  if(a==="toggle"){S.abierto=(S.abierto===p.id)?null:p.id;foco=S.abierto;}
+  else if(a==="tipo")p.tipo=b.dataset.t;
+  else if(a==="w")p.w[b.dataset.k]=p.w[b.dataset.k]>0?0:2;
+  else if(a==="lvl")p.w[b.dataset.k]=+b.dataset.l;
+  else if(a==="min"||a==="personas"){p[a]=+b.dataset.v;p.def=false;}
+  else if(a==="fu"){p.fu=b.dataset.v;p.def=false;}
+  else if(a==="eu"){p.def=false;var d=esperaDisp(p);p.eu=b.dataset.v;p.espera=Math.min(100000,d*(p.eu==="d"?24:1));}
+  else if(a==="riesgo")p.riesgo=+b.dataset.v;
+  else if(a==="up"&&i>0){S.pasos.splice(i,1);S.pasos.splice(i-1,0,p);foco=p.id;}
+  else if(a==="down"&&i<S.pasos.length-1){S.pasos.splice(i,1);S.pasos.splice(i+1,0,p);foco=p.id;}
+  else if(a==="del"){armar(b,"¿Borrar?",function(){S.pasos.splice(i,1);if(S.abierto===p.id)S.abierto=null;guardar();pintarPasos();pintarBarra();pintarNav();});return;}
+  else if(a==="next"){var sig=S.pasos[i+1];if(sig){S.abierto=sig.id;foco=sig.id;}}
+  else return;
+  guardar();var y=window.scrollY;pintarPasos();pintarBarra();pintarNav();
+  if(foco){var el=$("lista").querySelector('[data-id="'+(window.CSS&&CSS.escape?CSS.escape(foco):foco)+'"]');if(el&&el.scrollIntoView)el.scrollIntoView({block:"start",behavior:"smooth"});}
+  else window.scrollTo(0,y);
+});
+
+function pintarLista2(){
+  var h=S.pasos.length?"":'<div class="empty">Todavía no hay pasos. Elige un proceso tipo en «Definir» o escríbelos abajo, uno por línea.</div>';
+  S.pasos.forEach(function(p,i){
+    h+='<div class="row2" data-id="'+esc(p.id)+'"><span class="num">'+(i+1)+'</span><div class="r2mid"><textarea data-f="nombre" maxlength="80" rows="'+filas(p.nombre)+'" aria-label="Nombre del paso '+(i+1)+'" placeholder="Paso '+(i+1)+'">'+esc(p.nombre)+'</textarea>'+
+       (p.fase?'<span class="ftag">'+FASES[p.fase]+'</span>':'')+'</div><div class="r2btns">'+
+       '<button class="iconbtn" data-a="up" '+(i===0?"disabled":"")+' aria-label="Subir el paso '+(i+1)+'">↑</button>'+
+       '<button class="iconbtn" data-a="down" '+(i===S.pasos.length-1?"disabled":"")+' aria-label="Bajar el paso '+(i+1)+'">↓</button>'+
+       '<button class="iconbtn" data-a="del" aria-label="Borrar el paso '+(i+1)+'">✕</button></div></div>';
+  });
+  $("lista2").innerHTML=h;
+}
+$("lista2").addEventListener("input",function(e){
+  var el=e.target,row=el.closest(".row2");if(!row||el.dataset.f!=="nombre")return;
+  var p=porId(row.dataset.id);if(!p)return;p.nombre=el.value.replace(/[\r\n]+/g," ").slice(0,80);if(el.value!==p.nombre)el.value=p.nombre;el.rows=filas(p.nombre);guardar();
+});
+$("lista2").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.dataset.f==="nombre"){e.preventDefault();e.target.blur();}});
+function filas(t){var w=window.innerWidth||400,c=w<420?24:(w<700?44:60);return Math.min(3,Math.max(1,Math.ceil(String(t||"").length/c)));}
+$("lista2").addEventListener("click",function(e){
+  var b=e.target.closest("button[data-a]");if(!b)return;
+  var row=b.closest(".row2"),p=row&&porId(row.dataset.id);if(!p)return;
+  var i=S.pasos.indexOf(p),a=b.dataset.a;
+  if(a==="del"){armar(b,"¿Borrar?",function(){S.pasos.splice(i,1);if(S.abierto===p.id)S.abierto=null;guardar();pintarPasos();pintarNav();});return;}
+  if(a==="up"&&i>0){S.pasos.splice(i,1);S.pasos.splice(i-1,0,p);}
+  else if(a==="down"&&i<S.pasos.length-1){S.pasos.splice(i,1);S.pasos.splice(i+1,0,p);}
+  else return;
+  guardar();pintarPasos();
+  var nb=$("lista2").querySelector('[data-id="'+(window.CSS&&CSS.escape?CSS.escape(p.id):p.id)+'"] [data-a="'+a+'"]');if(nb&&!nb.disabled)nb.focus({preventScroll:true});
+});
+
+/* ================= ¿Falta algún paso? ================= */
+function norm(t){return String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+function preguntas(){return CHK_G.concat(CHK_S[S.sector]||[]);}
+function detectar(q){var re=new RegExp("(^|[^a-z0-9])(?:"+q.kw+")");for(var i=0;i<S.pasos.length;i++){if(re.test(norm(S.pasos[i].nombre)))return i;}return -1;}
+function cobertura(){var Q=preguntas(),pend=0;Q.forEach(function(q){if(!has(S.chk,q.id))pend++;});return {total:Q.length,revisadas:Q.length-pend,pendientes:pend};}
+function insertarPaso(q){
+  var f=q.fase,pos=-1,hay=false;
+  S.pasos.forEach(function(p,i){if(p.fase){hay=true;if(FRANK[p.fase]<=FRANK[f])pos=i;}});
+  if(!hay)pos=f==="ini"?-1:S.pasos.length-1;
+  var p=nuevoPaso(q.paso);p.fase=f;S.pasos.splice(pos+1,0,p);return pos+1;
+}
+function tarjetaPregunta(q){
+  var st=has(S.chk,q.id)?S.chk[q.id]:"",d=detectar(q),cls="",msg="";
+  if(st==="add"){cls="done";msg='<div class="cs">✓ Añadido a la lista de pasos</div>';}
+  else if(st==="ok"){cls="done";msg='<div class="cs">✓ Ya está incluido</div>';}
+  else if(st==="na"){cls="na";msg='<div class="cs na">No aplica en este proceso</div>';}
+  else if(d>=0){cls="auto";msg='<div class="cs auto">Parece que ya está: paso '+(d+1)+' «'+esc(nom(S.pasos[d]))+'». Si es así, pulsa «Ya está».</div>';}
+  return '<div class="chk '+cls+'" data-qid="'+q.id+'"><div class="cq">'+q.q+'</div><div class="hint">'+q.ej+'</div>'+msg+
+    '<div class="actions"><button class="btn sec" data-q="'+q.id+'" data-r="add"'+(st==="add"?" disabled":"")+'>+ Añadir «'+esc(q.paso)+'»</button>'+
+    '<button class="btn sec" data-q="'+q.id+'" data-r="ok" aria-pressed="'+(st==="ok")+'">Ya está</button>'+
+    '<button class="btn sec" data-q="'+q.id+'" data-r="na" aria-pressed="'+(st==="na")+'">No aplica</button></div></div>';
+}
+function pintarChecks(){
+  var c=cobertura(),pct=c.total?c.revisadas/c.total*100:0;
+  $("chk-prog").innerHTML='<div class="meta">'+c.revisadas+' de '+c.total+' preguntas respondidas'+(c.pendientes?'':' · ¡Listo!')+'</div><div class="prog"><i style="width:'+pct+'%"></i></div>'+
+    (S.pasos.length?'':'<div class="warn" style="margin-top:8px">Todavía no hay pasos: empieza por «Definir» o «Pasos».</div>');
+  var h='<div class="chkh">Para cualquier proceso</div>'+CHK_G.map(tarjetaPregunta).join("");
+  if(CHK_S[S.sector])h+='<div class="chkh">Específicas de '+SECBY[S.sector].n.toLowerCase()+'</div>'+CHK_S[S.sector].map(tarjetaPregunta).join("");
+  else h+='<div class="hint">Elige un sector en «Definir» para ver también las preguntas propias de tu actividad.</div>';
+  $("checks").innerHTML=h;
+}
+$("checks").addEventListener("click",function(e){
+  var b=e.target.closest("button[data-q]");if(!b||b.disabled||!has(QIDS,b.dataset.q))return;
+  var q=QIDS[b.dataset.q],r=b.dataset.r;$("chk-msg").textContent="";
+  if(r==="add"){
+    if(S.pasos.length>=MAXP){$("chk-msg").textContent="Has llegado al máximo de "+MAXP+" pasos: borra alguno antes de añadir otro.";return;}
+    var pos=insertarPaso(q);S.chk[q.id]="add";$("chk-msg").textContent="Añadido como paso "+(pos+1)+". Puedes moverlo en «Pasos».";
+  }else if(S.chk[q.id]===r)delete S.chk[q.id];
+  else S.chk[q.id]=r;
+  guardar();var y=window.scrollY;pintarChecks();pintarPasos();pintarNav();window.scrollTo(0,y);
+  var nb=$("checks").querySelector('[data-q="'+q.id+'"][data-r="'+r+'"]');if(nb&&!nb.disabled)nb.focus({preventScroll:true});
+});
+
+/* ================= Barra en directo ================= */
+function pintarBarra(){
+  var vis=S.view==="proceso"&&S.etapa===4&&S.pasos.length>0;
+  $("barra").classList.toggle("hidden",!vis);if(!vis)return;
+  var r=analisis(),cl=r.n-r.pendientes.length;
+  $("bar-h").textContent=fmt(r.hr)+" h/año"+(r.euros?" · "+eur(r.euros):"");
+  $("bar-s").textContent=plural(r.inst,"desperdicio","desperdicios")+" · "+cl+" de "+plural(r.n,"paso clasificado","pasos clasificados");
+}
+
+/* ================= Gráficos ================= */
+function paraCli(){return S.area==="Asistencial"?"para el residente o paciente":"para el cliente";}
+function alCli(){return S.area==="Asistencial"?"al residente o paciente":"al cliente";}
+var LINKEDIN="https://www.linkedin.com/in/sergio-gaete-aguilera-72cl";
+var COL={va:"#1f8a5b",nn:"#b57b06",nva:"#c0392b"},C_TEAL="#0f7c86",C_TEAL2="#8cc5ca",C_GRIS="#c9d3de",C_TRAB="#1d4a75";
+function pctTxt(a,b){return b?fmt(a/b*100)+" %":"0 %";}
+function tipA(t){return ' data-tip="'+esc(t)+'" tabindex="0"';}
+var SIMB={va:"✓",nn:"!",nva:"✗"};
+function segBar(partes,aria,cls){var tot=partes.reduce(function(a,p){return a+p.v;},0);if(!(tot>0))return "";
+  return '<div class="'+(cls||"segbar")+'" role="img" aria-label="'+esc(aria)+'">'+partes.filter(function(p){return p.v>0;}).map(function(p){return '<span style="flex:'+p.v+' 1 0;background:'+p.c+'"'+tipA(p.t)+'></span>';}).join("")+'</div>';}
+function leyenda(items){return '<div class="leg">'+items.map(function(it){return '<span><i style="background:'+it.c+'"></i>'+it.l+'</span>';}).join("")+'</div>';}
+function grafTiempo(r){
+  var h='<div class="card" id="g-tiempo"><h3>¿En qué se va el tiempo de trabajo?</h3>';
+  if(!(r.h>0))return h+'<div class="empty">Sin horas de trabajo: revisa la frecuencia y los minutos de los pasos.</div></div>';
+  var hc={va:0,nn:0,nva:0};S.pasos.forEach(function(p){hc[clase(p)]+=horasAnio(p);});
+  h+='<p class="chart-sum">'+(hc.va>0&&!(hc.nva>0)?'El <b>'+pctTxt(hc.va,r.h)+'</b> de las horas va a pasos que aportan valor y el <b>'+pctTxt(hc.nn,r.h)+'</b> a pasos necesarios sin valor; ningún paso es desperdicio puro.':hc.va>0?'El <b>'+pctTxt(hc.nva,r.h)+'</b> de las horas va a pasos que no aportan valor y el <b>'+pctTxt(hc.va,r.h)+'</b> a pasos que sí lo aportan.':'Ningún paso aporta valor: el <b>'+pctTxt(hc.nva,r.h)+'</b> de las horas va a pasos que no aportan valor y el <b>'+pctTxt(hc.nn,r.h)+'</b> a pasos necesarios sin valor.')+'</p>'+
+     '<p class="meta" style="margin:0">Horas al año de cada paso, en el orden del proceso. Cada tramo es un paso: tócalo para ver cuál es.</p>';
+  h+=segBar(S.pasos.map(function(p,i){var c=clase(p);return {v:horasAnio(p),c:COL[c],t:(i+1)+". "+nom(p)+" · "+fmt(horasAnio(p))+" h/año · "+CLASE[c].n};}),"Horas al año por tipo de paso: aporta valor "+fmt(hc.va)+" h, necesario sin valor "+fmt(hc.nn)+" h, no aporta valor "+fmt(hc.nva)+" h");
+  h+=leyenda([{c:COL.va,l:"✓ Aporta valor <b>"+fmt(hc.va)+" h</b> ("+pctTxt(hc.va,r.h)+")"},{c:COL.nn,l:"! Necesario sin valor <b>"+fmt(hc.nn)+" h</b> ("+pctTxt(hc.nn,r.h)+")"},{c:COL.nva,l:"✗ No aporta valor <b>"+fmt(hc.nva)+" h</b> ("+pctTxt(hc.nva,r.h)+")"}])+'<div class="hint">Porcentajes redondeados.</div>';
+  h+='<p class="meta">Pasos: '+plural(r.va,"aporta valor","aportan valor")+' · '+plural(r.nn,"necesario sin valor","necesarios sin valor")+' · '+plural(r.nva,"no aporta valor","no aportan valor")+'.</p>';
+  h+='<h3 style="margin-top:16px">¿Cuánto se puede recuperar?</h3>'+
+     segBar([{v:r.hr,c:C_TEAL,t:"Recuperable · "+fmtH(r.hr)+" h/año"},{v:Math.max(0,r.h-r.hr),c:C_GRIS,t:"Se mantiene · "+fmt(Math.max(0,r.h-r.hr))+" h/año"}],"Horas recuperables "+fmtH(r.hr)+" de "+fmt(r.h)+" al año")+
+     leyenda([{c:C_TEAL,l:"Recuperable <b>"+fmtH(r.hr)+" h</b> ("+pctTxt(r.hr,r.h)+")"},{c:C_GRIS,l:"Se mantiene <b>"+fmt(Math.max(0,r.h-r.hr))+" h</b>"}]);
+  return h+'</div>';
+}
+function filaH(etq,v,max,val,sub,clave,tip){return '<div class="hb'+(clave?' k':'')+'"'+tipA(tip)+'><span class="hl">'+esc(etq)+'</span><span class="ht"><i style="width:'+(max>0?v/max*100:0)+'%"></i></span><span class="hv">'+val+(sub?'<small>'+sub+'</small>':'')+'</span></div>';}
+function grafPareto(r){
+  var L=S.pasos.map(function(p,i){return {p:p,i:i,v:horasRecup(p)};}).filter(function(o){return o.v>0;}).sort(function(a,b){return b.v-a.v||a.i-b.i;});
+  if(L.length<2||!(r.hr>0))return "";
+  var cum=0,n80=0;L.forEach(function(o,j){cum+=o.v;o.cum=cum/r.hr;if(!n80&&o.cum>=0.8-1e-9)n80=j+1;});if(!n80)n80=L.length;
+  while(n80<L.length&&Math.abs(L[n80].v-L[n80-1].v)<1e-9)n80++;
+  var top=L.slice(0,10),resto=L.slice(10),max=L[0].v;
+  var h='<div class="card" id="g-pareto"><h3>¿Dónde se concentran las horas recuperables?</h3>'+
+    '<p class="chart-sum">'+(n80<L.length?'<b>'+n80+' de '+L.length+' pasos</b> concentran el 80 % de las horas recuperables: empieza por ellos.':'Las horas recuperables están repartidas entre todos los pasos: no hay un grupo pequeño que concentre el 80 %.')+'</p>'+
+    '<p class="meta" style="margin:0">Pasos ordenados de más a menos horas recuperables al año, con el porcentaje acumulado (regla 80/20).</p><div class="hbars">';
+  h+=top.map(function(o,j){return filaH((o.i+1)+". "+nom(o.p),o.v,max,fmtH(o.v)+" h",fmt(o.cum*100,1)+" % acumulado",j<n80,(o.i+1)+". "+nom(o.p)+" · "+fmt(o.v)+" h/año recuperables");}).join("");
+  h+='</div>';
+  if(resto.length)h+='<p class="meta">Otros '+plural(resto.length,"paso","pasos")+': '+fmt(resto.reduce(function(a,o){return a+o.v;},0))+' h en total.</p>';
+  return h+leyenda([{c:C_TEAL,l:"Pasos que suman el 80 %"},{c:C_TEAL2,l:"Resto"}])+'</div>';
+}
+function horasPorDesperdicio(){
+  var hw={},n={},sv=0,svn=0;WK.forEach(function(k){hw[k]=0;n[k]=0;});
+  S.pasos.forEach(function(p){var hrp=horasRecup(p);if(!(hrp>0))return;var ds=detectados(p),tot=ds.reduce(function(a,k){return a+p.w[k]*WBY[k].peso;},0);
+    if(!ds.length||!(tot>0)){sv+=hrp;svn++;return;}ds.forEach(function(k){hw[k]+=hrp*p.w[k]*WBY[k].peso/tot;n[k]++;});});
+  return {hw:hw,n:n,sv:sv,svn:svn};
+}
+function grafDesp(r){
+  var d=horasPorDesperdicio(),rows=WK.filter(function(k){return d.hw[k]>0;}).map(function(k){return {l:WBY[k].ic+" "+WBY[k].n,v:d.hw[k],n:d.n[k]};});
+  if(d.sv>0)rows.push({l:"🚫 Paso sin valor (sin desperdicio marcado)",v:d.sv,n:d.svn});
+  rows.sort(function(a,b){return b.v-a.v;});
+  var h='<div class="card" id="g-desp"><h3>¿Qué desperdicio cuesta más horas?</h3>';
+  if(!rows.length)return h+'<div class="empty">No se han detectado horas recuperables.</div></div>';
+  var max=rows[0].v,sin=WK.filter(function(k){return !(r.cnt[k]>0);}).map(function(k){return WBY[k].n;});
+  h+='<p class="chart-sum">El que más horas cuesta es <b>'+esc(rows[0].l.replace(/^\S+\s/,""))+'</b>: '+fmt(rows[0].v)+' h al año ('+pctTxt(rows[0].v,r.hr)+' de lo recuperable).</p>'+
+     '<p class="meta" style="margin:0">Horas recuperables al año repartidas entre los desperdicios marcados en cada paso, según su intensidad.</p><div class="hbars">'+
+     rows.map(function(o,j){return filaH(o.l,o.v,max,fmtH(o.v)+" h",plural(o.n,"paso","pasos"),true,o.l+" · "+fmt(o.v)+" h/año · en "+plural(o.n,"paso","pasos"));}).join("")+'</div>';
+  if(sin.length)h+='<p class="meta">Sin marcar en ningún paso: '+sin.join(", ")+'.</p>';
+  return h+'</div>';
+}
+function grafPlazo(r){
+  if(!(r.esp>0))return "";
+  var cVA=S.pasos.filter(function(p){return clase(p)==="va";}).reduce(function(a,p){return a+p.min;},0)/60,otro=Math.max(0,r.cicloTrabajo-cVA);
+  function fila(et,esp){var tot=cVA+otro+esp;return '<div class="tl"><span>'+et+'</span><span><span class="tlb" style="width:'+(tot/r.ciclo*100)+'%">'+
+    [{v:cVA,c:COL.va,t:"Trabajo que aporta valor · "+dur(cVA)},{v:otro,c:C_TRAB,t:"Resto del trabajo · "+dur(otro)},{v:esp,c:C_GRIS,t:"Espera · "+dur(esp)}].filter(function(p){return p.v>0;}).map(function(p){return '<span style="flex:'+p.v+' 1 0;background:'+p.c+'"'+tipA(p.t)+'></span>';}).join("")+
+    '</span></span><span class="tlv">'+dur(tot,r.ciclo)+'</span></div>';}
+  var h='<div class="card" id="g-plazo"><h3>Plazo de cada ciclo</h3><p class="chart-sum">De un plazo de <b>'+dur(r.ciclo)+'</b>, solo el <b>'+fmt(r.pce,1)+' %</b> es trabajo que aporta valor; la espera supone el <b>'+pctTxt(r.esp,r.ciclo)+'</b>.</p>'+
+    '<div role="img" aria-label="Plazo del ciclo ahora y reduciendo esperas">'+fila("Ahora",r.esp)+(r.espRed>0?fila("Posible",r.esp-r.espRed):'')+'</div>'+
+    leyenda([{c:COL.va,l:"Trabajo que aporta valor <b>"+dur(cVA)+"</b>"},{c:C_TRAB,l:"Resto del trabajo <b>"+dur(otro)+"</b>"},{c:C_GRIS,l:"Espera <b>"+dur(r.esp)+"</b>"+(r.espRed>0?" (se podría reducir "+dur(r.espRed)+")":"")}])+
+    '<p class="meta">Eficiencia del proceso: tiempo de trabajo que aporta valor ÷ plazo total. Un plazo dominado por la espera es el patrón típico: ahí suele estar la mayor mejora para el cliente.</p></div>';
+  return h;
+}
+function flujo(){var n=S.pasos.length;return '<div class="flow" role="img" aria-label="Secuencia del proceso por tipo de paso">'+S.pasos.map(function(p,i){var c=clase(p);
+  return '<span class="fg"><span class="fs '+c+'"'+tipA((i+1)+". "+nom(p)+" · "+CLASE[c].n+" · "+fmt(horasAnio(p))+" h/año")+'>'+(i+1)+'<small aria-hidden="true">'+SIMB[c]+'</small></span>'+(p.espera>0?'<span class="fw"'+tipA("Espera de "+dur(p.espera)+" tras el paso "+(i+1))+'>⏳</span>':'')+(i<n-1?'<span class="fa" aria-hidden="true">›</span>':'')+'</span>';}).join("")+'</div>'+
+  leyenda([{c:COL.va,l:"✓ Aporta valor"},{c:COL.nn,l:"! Necesario sin valor"},{c:COL.nva,l:"✗ No aporta valor"}].concat(S.pasos.some(function(p){return p.espera>0;})?[{c:"transparent",l:"⏳ Espera"}]:[]));}
+var tipEl=null;
+function tipShow(el,x,y){if(!tipEl){tipEl=document.createElement("div");tipEl.className="tip";tipEl.setAttribute("role","tooltip");document.body.appendChild(tipEl);}
+  tipEl.textContent=el.getAttribute("data-tip");tipEl.style.display="block";var w=tipEl.offsetWidth,hh=tipEl.offsetHeight;
+  tipEl.style.left=Math.min(Math.max(8,x-w/2),window.innerWidth-w-8)+"px";var T=y-hh-12;tipEl.style.top=(T<8?y+16:T)+"px";}
+function tipHide(){if(tipEl)tipEl.style.display="none";}
+document.addEventListener("pointerover",function(e){var el=e.target.closest&&e.target.closest("[data-tip]");if(el)tipShow(el,e.clientX,e.clientY);else tipHide();});
+document.addEventListener("pointermove",function(e){var el=e.target.closest&&e.target.closest("[data-tip]");if(el)tipShow(el,e.clientX,e.clientY);});
+window.addEventListener("scroll",tipHide,{passive:true});
+document.addEventListener("focusin",function(e){var el=e.target.closest&&e.target.closest("[data-tip]");if(el){var r=el.getBoundingClientRect();tipShow(el,r.left+r.width/2,r.top);}});
+document.addEventListener("focusout",function(e){if(e.target.closest&&e.target.closest("[data-tip]"))tipHide();});
+
+/* ================= Resultados ================= */
+function pintarResult(){
+  var box=$("result-box");
+  if(!S.pasos.length){box.innerHTML='<div class="card"><h2>Resultados</h2><div class="empty">Añade pasos y diagnostícalos para ver los resultados, o carga un ejemplo.</div><div class="actions"><button class="btn" data-go="proceso">← Ir al proceso</button></div></div>';return;}
+  var r=analisis(),h="";
+  var f=r.n===1?(r.va?"El único paso aporta valor "+alCli()+".":"El único paso no aporta valor "+alCli()+"."):(r.va===0?"Ninguno de los "+r.n+" pasos aporta valor "+alCli()+".":(r.va===r.n?"Los "+r.n+" pasos aportan valor "+alCli()+".":"Solo "+plural(r.va,"paso","pasos")+" de "+r.n+(r.va===1?" aporta":" aportan")+" valor "+alCli()+"."));
+  if(r.hr>0){var hTxt=fmtH(r.hr);f+=" Se podrían recuperar "+(hTxt.indexOf("menos")===0?"":"unas ")+"<b>"+hTxt+" horas al año</b>"+(r.euros?" (<b>"+eur(r.euros)+"</b>)":"")+", el equivalente a <b>"+(function(j){return j+(j==="1"?" jornada":" jornadas");})(fmtH(r.jornadas))+"</b> de 8 horas"+(r.fte>=0.05?" o "+personasTxt(r.fte):"")+".";}
+  else f+=" No se han detectado horas recuperables.";
+  if(r.espRed>0)f+=" Y el plazo de cada ciclo podría bajar de <b>"+dur(r.ciclo)+"</b> a <b>"+dur(r.cicloMejor,r.ciclo)+"</b> ("+fmt(r.pctPlazo)+" % menos).";
+  h+='<div class="card"><div class="actions" style="margin-top:0"><button class="btn ghost" data-go="proceso">← Editar proceso</button></div>'+
+     '<div class="meta">'+esc(S.area)+(S.sector?' · '+SECBY[S.sector].n:'')+'</div><h2>'+esc(nomProceso())+'</h2>'+
+     ((S.inicio||S.fin)?'<div class="meta">'+(S.inicio?'Empieza: '+esc(S.inicio):'')+(S.inicio&&S.fin?' · ':'')+(S.fin?'Termina: '+esc(S.fin):'')+'</div>':'')+
+     '<p class="headline">'+f+'</p>'+
+     '<div class="actions"><button class="btn teal" id="b-card">Crear tarjeta para compartir (PNG)</button></div></div>';
+  var cob=cobertura(),nDef=S.pasos.filter(function(p){return p.def;}).length;
+  if(cob.pendientes)h+='<div class="warn">Quedan '+plural(cob.pendientes,"pregunta","preguntas")+' de «¿Falta algún paso?» sin revisar: puede que falten pasos en el análisis.<button class="btn ghost" data-etapa="3">Revisarlas</button></div>';
+  if(nDef)h+='<div class="warn">'+(nDef===1?'1 paso mantiene':nDef+' pasos mantienen')+' los tiempos por defecto (1 vez al día, 15 minutos, 1 persona). Revísalos para que las horas sean fiables.<button class="btn ghost" data-etapa="4">Revisar tiempos</button></div>';
+  if(r.pendientes.length)h+='<div class="warn">'+(r.pendientes.length===1?'Hay 1 paso':'Hay '+r.pendientes.length+' pasos')+' sin clasificar: '+r.pendientes.map(function(p){return esc(nom(p));}).join(", ")+'. Cuentan como "No aporta valor".</div>';
+  h+='<div class="kpis">'+
+     '<div class="kpi"><b>'+fmt(r.pctVA)+' %</b><span>de los pasos aportan valor ('+r.va+' de '+r.n+')</span></div>'+
+     '<div class="kpi"><b>'+fmt(r.h)+' h</b><span>al año dedica el proceso</span></div>'+
+     '<div class="kpi hl"><b>'+fmtH(r.hr)+' h</b><span>al año se podrían recuperar ('+fmt(r.pctRec)+' %)'+(r.euros?' · '+eur(r.euros):'')+'</span></div>'+
+     (r.espRed>0?'<div class="kpi"><b>−'+fmt(r.pctPlazo)+' %</b><span>de plazo por ciclo ('+dur(r.ciclo)+' → '+dur(r.cicloMejor,r.ciclo)+')</span></div>':'<div class="kpi"><b>'+r.inst+'</b><span>'+(r.inst===1?'desperdicio detectado':'desperdicios detectados')+'</span></div>')+
+     '</div>';
+  h+=grafTiempo(r);
+  h+='<div class="card"><h3>'+(r.prios.length===3?'Las 3 mejoras que más horas liberan':'Mejoras que más horas liberan')+'</h3><p class="meta" style="margin-top:0">Ordenadas por horas recuperables × riesgo de error. Las horas ya tienen en cuenta la frecuencia, el tiempo y las personas.</p>';
+  if(!r.prios.length)h+='<div class="empty">No se han detectado desperdicios con horas recuperables.</div>';
+  r.prios.forEach(function(o,j){
+    var p=o.p,k=principal(p),ds=detectados(p);
+    var c=k?cm(k):"Revisar si este paso puede eliminarse o integrarse en otro, porque no aporta valor "+alCli()+".";
+    h+='<div class="prio"><div class="n">'+(j+1)+'</div><div class="body"><div class="t">'+esc(nom(p))+'</div>'+
+       '<div class="w">'+(ds.length?ds.map(function(x){return WBY[x].ic+" "+WBY[x].n;}).join(", "):("Paso sin valor "+paraCli()))+'</div>'+
+       '<div class="cm"><b>Qué hacer'+(k?' ('+WBY[k].n.toLowerCase()+')':'')+':</b> '+c+'</div>'+
+       '<div class="pn"><span>Recuperable <b>'+fmt(o.hr)+' h/año</b>'+(S.coste?' · <b>'+eur(o.hr*S.coste)+'</b>':'')+'</span><span>'+frecTxt(p)+' × '+fmtN(p.min)+' min × '+plural(p.personas,"persona","personas")+'</span><span>Riesgo '+RIESGO[p.riesgo-1].toLowerCase()+'</span></div></div></div>';
+  });
+  h+='</div>';
+  h+=grafPareto(r);
+  if(r.plazos.length){
+    h+='<div class="card"><h3>Mejoras que más acortan el plazo</h3><p class="meta" style="margin-top:0">Esperas que alargan cada ciclo aunque no consuman horas de trabajo.</p>';
+    r.plazos.forEach(function(o,j){
+      var p=o.p;
+      h+='<div class="prio"><div class="n" style="background:var(--navy2)">'+(j+1)+'</div><div class="body"><div class="t">'+esc(nom(p))+'</div>'+
+         '<div class="w">⏳ Espera de '+dur(p.espera)+' por ciclo · se podría reducir <span class="tag-plazo">'+dur(o.red)+'</span></div>'+
+         '<div class="cm"><b>Qué hacer (esperas):</b> '+cm("E")+'</div></div></div>';
+    });
+    h+='</div>';
+  }
+  h+=grafPlazo(r);
+  h+='<div class="card"><h3>Mapa del proceso</h3>'+flujo()+'<div class="map" style="margin-top:12px">';
+  S.pasos.forEach(function(p,i){
+    var c=clase(p),ds=detectados(p);
+    h+='<div class="mstep '+c+'"><div class="t"><span>'+(i+1)+'. '+esc(nom(p))+'</span><span class="badge '+CLASE[c].b+'">'+CLASE[c].n+'</span></div>'+
+       '<div class="meta">'+fmt(horasAnio(p))+' h/año · recuperable '+fmt(horasRecup(p))+' h/año ('+fmt(pctRecup(p)*100)+' %)</div>';
+    if(ds.length)h+='<ul>'+ds.map(function(k){return '<li><b>'+WBY[k].ic+' '+WBY[k].n+'</b> ('+WBY[k].esc[p.w[k]-1].toLowerCase()+'): '+WBY[k].exp+'</li>';}).join("")+'</ul>';
+    else h+='<div class="ok">'+(c==="nva"?"Sin desperdicios concretos marcados, pero el paso no aporta valor "+alCli()+".":"Sin desperdicios detectados.")+'</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  h+=grafDesp(r);
+  h+='<div class="autor"><span>¿Te ha resultado útil? Esta herramienta la ha creado Sergio Gaete Aguilera, especialista en Lean y Supply Chain.</span><a href="'+LINKEDIN+'" target="_blank" rel="noopener">Conecta conmigo en LinkedIn →</a></div>';
+  h+='<div class="card"><details class="calc"><summary>¿Cómo se calcula?</summary><ul>'+
+     '<li><b>Horas al año:</b> veces por semana × minutos ÷ 60 × personas × '+S.semanas+' semanas. "Al día" cuenta '+S.dias+' días por semana y "al mes", 12 veces al año ajustadas a las semanas laborables (12 × '+S.semanas+' ÷ 52).</li>'+
+     '<li><b>Porcentaje recuperable:</b> cada desperdicio suma un 10 %, 20 % o 30 % según su intensidad (al marcarlo cuenta como el valor intermedio). Sobreproducción cuenta la mitad e inventario una cuarta parte, porque afectan sobre todo al stock y al plazo más que a las horas de trabajo.</li>'+
+     '<li><b>Topes:</b> como máximo se recupera el 20 % de un paso que aporta valor, el 60 % de uno obligatorio y el 90 % de uno que no aporta valor (este último parte de un mínimo del 50 %).</li>'+
+     '<li><b>Prioridad:</b> horas recuperables × riesgo de error (1 bajo, 2 medio, 3 alto).</li>'+
+     '<li><b>Plazo:</b> suma de los minutos de cada paso y de las esperas. Si se marca el desperdicio de esperas, la espera se reduce un 25 %, 50 % o 75 % según su intensidad.</li>'+
+     '<li><b>Gráfico por desperdicio:</b> las horas recuperables de cada paso se reparten entre sus desperdicios en proporción a su intensidad y a su peso. Los pasos que no aportan valor y no tienen desperdicios marcados aparecen como "Paso sin valor".</li>'+
+     '<li><b>Regla 80/20:</b> se ordenan los pasos por horas recuperables y se marcan los que, sumados, llegan al 80 % del total.</li>'+
+     '<li><b>Jornadas:</b> horas ÷ 8. <b>Persona a jornada completa:</b> '+S.semanas+' semanas × 40 horas.'+(S.coste?' <b>Euros:</b> horas × '+eur(S.coste)+' por hora.':'')+'</li>'+
+     '<li>Son estimaciones orientativas para decidir por dónde empezar, no una medición. Confírmalas observando el proceso real (gemba).</li></ul></details></div>';
+  box.innerHTML=h;
+  $("b-card").addEventListener("click",abrirTarjeta);
+}
+
+/* ================= Tarjeta PNG ================= */
+function lineas(ctx,t,maxW){var pal=String(t).split(/\s+/),out=[],l="";pal.forEach(function(w){var x=l?l+" "+w:w;if(ctx.measureText(x).width>maxW&&l){out.push(l);l=w;}else l=x;});if(l)out.push(l);return out;}
+function texto(ctx,t,x,y,maxW,lh,maxL){
+  var ls=lineas(ctx,t,maxW).map(function(l){while(ctx.measureText(l).width>maxW&&l.length>1)l=l.slice(0,-1);return l;});
+  if(ls.length>maxL){ls=ls.slice(0,maxL);var u=ls[maxL-1];while(ctx.measureText(u+"…").width>maxW&&u.length)u=u.slice(0,-1);ls[maxL-1]=u.replace(/\s+$/,"")+"…";}
+  ls.forEach(function(l,i){ctx.fillText(l,x,y+i*lh);});return ls.length*lh;
+}
+function ajustar(ctx,t,peso,tam,maxW,F){var s=tam;ctx.font=peso+" "+s+"px "+F;while(ctx.measureText(t).width>maxW&&s>14){s-=2;ctx.font=peso+" "+s+"px "+F;}return s;}
+function dibujarTarjeta(){
+  var cv=$("cv"),c=cv.getContext("2d"),r=analisis(),F="system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif",t;
+  c.textAlign="left";c.textBaseline="top";
+  c.fillStyle="#ffffff";c.fillRect(0,0,1080,1350);
+  c.fillStyle="#12304f";c.fillRect(0,0,1080,330);
+  c.fillStyle="#5fd0d9";c.font="700 30px "+F;c.fillText("DETECTOR DE DESPERDICIOS LEAN",72,64);
+  c.fillStyle="#ffffff";c.font="800 62px "+F;var hT=texto(c,nomProceso(),72,118,936,74,2);
+  c.fillStyle="#cfe0ef";c.font="400 30px "+F;c.fillText(S.area+" · "+plural(r.n,"paso analizado","pasos analizados"),72,118+hT+12);
+  var cx=250,cy=560,R=150,fr=r.n?r.va/r.n:0;
+  c.lineWidth=44;c.lineCap="butt";
+  c.strokeStyle="#fbe6e3";c.beginPath();c.arc(cx,cy,R,0,Math.PI*2);c.stroke();
+  if(fr>0){c.strokeStyle="#1f8a5b";c.beginPath();c.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+Math.PI*2*fr);c.stroke();}
+  c.textAlign="center";c.textBaseline="middle";c.fillStyle="#12304f";
+  t=fmt(r.pctVA)+" %";ajustar(c,t,"800",72,240,F);c.fillText(t,cx,cy-8);
+  c.font="400 24px "+F;c.fillStyle="#5d6b7a";c.fillText("aporta valor",cx,cy+46);
+  c.textAlign="left";c.textBaseline="top";c.font="400 24px "+F;
+  c.fillText(r.va+" de "+plural(r.n,"paso","pasos")+(r.va===1?" aporta valor":" aportan valor"),cx-150,cy+R+40);
+  var x=500,y=395;
+  c.fillStyle="#0f7c86";t=fmt(r.hr)+" h";ajustar(c,t,"800",84,508,F);c.fillText(t,x,y);
+  c.fillStyle="#5d6b7a";c.font="400 28px "+F;c.fillText("al año que se podrían recuperar",x,y+96);
+  c.fillStyle="#0f7c86";t="≈ "+fmt(r.jornadas)+" jornadas"+(r.euros?" · "+eur(r.euros):" de trabajo");ajustar(c,t,"700",30,508,F);c.fillText(t,x,y+136);
+  y+=200;
+  if(r.espRed>0){
+    c.fillStyle="#12304f";c.font="800 52px "+F;t="−"+fmt(r.pctPlazo)+" %";c.fillText(t,x,y);var w1=c.measureText(t).width;
+    c.fillStyle="#5d6b7a";c.font="400 28px "+F;c.fillText("de plazo por ciclo",x+w1+16,y+16);
+    c.font="400 24px "+F;t="De "+dur(r.ciclo)+" a "+dur(r.cicloMejor,r.ciclo);ajustar(c,t,"400",24,508,F);c.fillText(t,x,y+62);
+  }else{
+    c.fillStyle="#12304f";c.font="800 52px "+F;c.fillText(String(r.inst),x,y);var w2=c.measureText(String(r.inst)).width;
+    c.fillStyle="#5d6b7a";c.font="400 28px "+F;c.fillText(r.inst===1?"desperdicio detectado":"desperdicios detectados",x+w2+16,y+16);
+  }
+  y+=112;
+  c.fillStyle="#5d6b7a";c.font="400 26px "+F;c.fillText("El desperdicio que más se repite:",x,y);
+  c.fillStyle=r.topW?"#c0392b":"#1f8a5b";t=r.topW?WBY[r.topW].n:"Ninguno";ajustar(c,t,"700",34,508,F);c.fillText(t,x,y+34);
+  y=840;
+  c.fillStyle="#12304f";c.font="700 36px "+F;c.fillText(r.prios.length===3?"3 mejoras prioritarias":"Mejoras prioritarias",72,y);
+  c.fillStyle="#dfe5ec";c.fillRect(72,y+52,936,3);
+  y+=78;
+  if(!r.prios.length){c.fillStyle="#5d6b7a";c.font="400 28px "+F;c.fillText("No se han detectado desperdicios.",72,y);}
+  r.prios.forEach(function(o,j){
+    var p=o.p,k=principal(p),ds=detectados(p);
+    c.fillStyle="#0f7c86";c.beginPath();c.arc(100,y+26,26,0,Math.PI*2);c.fill();
+    c.fillStyle="#ffffff";c.font="800 28px "+F;c.textAlign="center";c.textBaseline="middle";c.fillText(String(j+1),100,y+27);
+    c.textAlign="left";c.textBaseline="top";
+    var hTxt=fmt(o.hr)+" h/año";c.font="700 30px "+F;var hW=c.measureText(hTxt).width;
+    c.fillStyle="#1c2733";c.font="700 32px "+F;texto(c,nom(p),148,y+6,Math.max(200,1008-hW-24-148),38,1);
+    c.fillStyle="#0f7c86";c.font="700 30px "+F;c.textAlign="right";c.fillText(hTxt,1008,y+8);c.textAlign="left";
+    c.fillStyle="#5d6b7a";c.font="400 26px "+F;
+    texto(c,ds.length?ds.map(function(q){return WBY[q].n;}).join(", "):("Paso sin valor "+paraCli()),148,y+52,860,32,1);
+    y+=118;
+  });
+  c.fillStyle="#f4f6f9";c.fillRect(0,1250,1080,100);
+  c.fillStyle="#12304f";c.font="700 26px "+F;c.fillText("Detector de desperdicios Lean · Sergio Gaete Aguilera",72,1262);c.fillStyle="#0f7c86";c.font="600 22px "+F;c.fillText("linkedin.com/in/sergio-gaete-aguilera-72cl",72,1296);
+  c.fillStyle="#5d6b7a";c.font="400 22px "+F;c.fillText("Estimación orientativa · "+S.semanas+" semanas laborables al año",72,1322);
+  return cv;
+}
+function abrirTarjeta(){
+  var url=dibujarTarjeta().toDataURL("image/png");$("card-img").src=url;
+  var a=$("card-dl");a.href=url;a.download="desperdicios-"+slug(S.proceso)+".png";
+  $("modal").classList.add("open");$("card-close").focus();
+}
+function cerrarModal(){if(!$("modal").classList.contains("open"))return;$("modal").classList.remove("open");var b=$("b-card");if(b)b.focus();}
+document.addEventListener("keydown",function(e){
+  if(!$("modal").classList.contains("open"))return;
+  if(e.key==="Escape"){cerrarModal();return;}
+  if(e.key==="Tab"){var f=[$("card-dl"),$("card-close")],i=f.indexOf(document.activeElement);e.preventDefault();f[(i+(e.shiftKey?f.length-1:1))%f.length].focus();}
+});
+$("card-close").addEventListener("click",cerrarModal);
+$("modal").addEventListener("click",function(e){if(e.target===this)cerrarModal();});
+
+/* ================= Arranque ================= */
+try{localStorage.setItem(KEY+"_t","1");localStorage.removeItem(KEY+"_t");}catch(e){avisoAlmacen();}
+ir(S.view);
+window.__DDL={estado:function(){return S;},analisis:analisis,cobertura:cobertura,horasPorDesperdicio:horasPorDesperdicio};
+})();
+</script>
+</body>
+</html>
